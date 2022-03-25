@@ -1,29 +1,32 @@
-from starlite import Controller, WebSocket, get, websocket
+from starlite import Controller, State, WebSocket, get, websocket
 from websockets.exceptions import ConnectionClosedError
 
-from emistream.models.available import (
-    AvailableNotification,
-    AvailableResponse,
-)
-from emistream.stream import manager
+from emistream.models.available import AvailableNotification, AvailableResponse
 
 
 class AvailableController(Controller):
     path = None
 
     @get()
-    def available(self) -> AvailableResponse:
-        return AvailableResponse(availability=manager.availability())
+    async def available(self, state: State) -> AvailableResponse:
+        return AvailableResponse(
+            availability=state.stream_manager.availability()
+        )
 
     @websocket("/notify")
-    async def notify_available(self, socket: WebSocket) -> None:
+    async def notify_available(self, state: State, socket: WebSocket) -> None:
         await socket.accept()
         try:
-            while True:  # TODO: fix shutdown
-                await manager.availability_changed()
-                availability = manager.availability()
-                notification = AvailableNotification(availability=availability)
-                await socket.send_json(notification.json())
+            previous = None
+            while True:
+                await state.stream_manager.state_changed()
+                availability = state.stream_manager.availability()
+                if availability != previous:
+                    notification = AvailableNotification(
+                        availability=availability
+                    )
+                    await socket.send_json(notification.json())
+                    previous = availability
         finally:
             try:
                 await socket.close()
