@@ -1,10 +1,8 @@
 from abc import ABC, abstractmethod
-from threading import Event, RLock, Thread
+from threading import Event, Lock, Thread
 from typing import Any, Dict, Optional
 
 import ffmpeg
-
-from emistream.utils import thread
 
 
 class Stream(ABC):
@@ -17,7 +15,7 @@ class Stream(ABC):
         pass
 
     @abstractmethod
-    async def ended(self) -> bool:
+    def wait(self) -> bool:
         pass
 
 
@@ -31,7 +29,7 @@ class FFmpegStream(Stream):
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
-        self.lock = RLock()
+        self.lock = Lock()
         self.ended_event = Event()
         self.input = input
         self.output = output
@@ -39,18 +37,24 @@ class FFmpegStream(Stream):
         self.output_options = output_options or {}
         self.process = None
 
+    def create_ffmpeg_stream(self) -> ffmpeg.nodes.OutputStream:
+        f = ffmpeg.input(self.input, enable_cuda=False, **self.input_options)
+        return f.output(self.output, enable_cuda=False, **self.output_options)
+
+    def monitor(self) -> None:
+        self.process.wait()
+        with self.lock:
+            self.process = None
+            self.ended_event.set()
+            self.ended_event.clear()
+
     def start(self) -> None:
         with self.lock:
             if self.process is not None:
                 raise RuntimeError("Stream already started.")
-            # TODO: handle errors and logs
-            f = ffmpeg.input(
-                self.input, enable_cuda=False, **self.input_options
-            )
-            f = f.output(self.output, enable_cuda=False, **self.output_options)
-            self.process = f.run_async()
-            self.ended_event.clear()
-            Thread(target=self._wait).start()
+            stream = self.create_ffmpeg_stream()
+            self.process = stream.run_async()
+            Thread(target=self.monitor).start()
 
     def end(self) -> None:
         with self.lock:
@@ -58,17 +62,8 @@ class FFmpegStream(Stream):
                 return
             self.process.kill()
 
-    def _wait(self) -> None:
-        if self.process is None:
-            return
-        self.process.wait()
-        with self.lock:
-            self.process = None
-            self.ended_event.set()
-
-    async def ended(self) -> bool:
-        await thread(self.ended_event.wait)
-        return True
+    def wait(self) -> None:
+        self.ended_event.wait()
 
 
 class SRTStream(FFmpegStream):
@@ -80,7 +75,6 @@ class SRTStream(FFmpegStream):
         input_host: str = "0.0.0.0",
         **kwargs,
     ) -> None:
-        # TODO: sanitize
         input = f"srt://{input_host}:{input_port}"
         output = f"srt://{output_host}:{output_port}"
         kwargs.pop("input", None)

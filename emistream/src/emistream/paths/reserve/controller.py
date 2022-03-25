@@ -1,12 +1,15 @@
-from starlite import Controller, post
+from starlite import Controller, State, post
 
 from emistream.models.reserve import ReserveRequest, ReserveResponse
-from emistream.stream import manager
 
 
 class ReserveController(Controller):
     path = None
 
     @post()
-    def reserve(self, data: ReserveRequest) -> ReserveResponse:
-        return ReserveResponse(token=manager.reserve(data.reservation))
+    async def reserve(
+        self, state: State, data: ReserveRequest
+    ) -> ReserveResponse:
+        return ReserveResponse(
+            token=await state.stream_manager.reserve(data.reservation)
+        )
