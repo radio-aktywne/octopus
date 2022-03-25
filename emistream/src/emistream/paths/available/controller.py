@@ -12,7 +12,7 @@ class AvailableController(Controller):
     path = None
 
     @get()
-    async def available(self) -> AvailableResponse:
+    def available(self) -> AvailableResponse:
         return AvailableResponse(availability=manager.availability())
 
     @websocket("/notify")
@@ -24,8 +24,6 @@ class AvailableController(Controller):
                 availability = manager.availability()
                 notification = AvailableNotification(availability=availability)
                 await socket.send_json(notification.json())
-        except RuntimeError:
-            pass
         finally:
             try:
                 await socket.close()
