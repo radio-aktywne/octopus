@@ -1,9 +1,10 @@
-import asyncio
 from abc import ABC, abstractmethod
 from threading import Event, RLock, Thread
 from typing import Any, Dict, Optional
 
 import ffmpeg
+
+from emistream.utils import thread
 
 
 class Stream(ABC):
@@ -66,9 +67,7 @@ class FFmpegStream(Stream):
             self.ended_event.set()
 
     async def ended(self) -> bool:
-        await asyncio.get_running_loop().run_in_executor(
-            None, lambda: self.ended_event.wait()
-        )
+        await thread(self.ended_event.wait)
         return True
 
 

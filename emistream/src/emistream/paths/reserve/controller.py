@@ -8,5 +8,5 @@ class ReserveController(Controller):
     path = None
 
     @post()
-    async def reserve(self, data: ReserveRequest) -> ReserveResponse:
+    def reserve(self, data: ReserveRequest) -> ReserveResponse:
         return ReserveResponse(token=manager.reserve(data.reservation))
