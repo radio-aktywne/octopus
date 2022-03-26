@@ -4,7 +4,8 @@ FROM continuumio/miniconda3:$MINICONDA_IMAGE_TAG
 
 # add bash, because it's not available by default on alpine
 # and ffmpeg because we need it for streaming
-RUN apk add --no-cache bash ffmpeg
+# and git to get pystreams
+RUN apk add --no-cache bash ffmpeg git
 
 # install poetry
 COPY ./requirements.txt /tmp/requirements.txt
@@ -40,8 +41,10 @@ RUN poetry build -f wheel && \
     python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
 
 ENV EMISTREAM_PORT=10000 \
-    EMISTREAM_TARGET_HOST=localhost \
-    EMISTREAM_TARGET_PORT=9000
+    EMISTREAM_LIVE_HOST=localhost \
+    EMISTREAM_LIVE_PORT=9000 \
+    EMISTREAM_RECORDING_HOST=localhost \
+    EMISTREAM_RECORDING_PORT=31000
 
 EXPOSE 10000
 EXPOSE 10000/udp

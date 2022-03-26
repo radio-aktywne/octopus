@@ -14,8 +14,8 @@ python = "^3.9"
 typer = { version = "^0.4", extras = ["all"] }
 starlite = "^1.2"
 uvicorn = { version = "^0.17", extras = ["standard"] }
-ffmpeg-generator = "^1.0"
-numpy = "^1.22"
+pystreams = { git = "https://github.com/radio-aktywne/pystreams.git", tag = "0.1.1" }
+httpx = "^0.22"
 
 # dev
 

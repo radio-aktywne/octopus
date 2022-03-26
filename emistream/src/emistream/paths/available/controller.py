@@ -10,7 +10,7 @@ class AvailableController(Controller):
     @get()
     async def available(self, state: State) -> AvailableResponse:
         return AvailableResponse(
-            availability=state.stream_manager.availability()
+            availability=await state.stream_manager.availability()
         )
 
     @websocket("/notify")
@@ -20,7 +20,7 @@ class AvailableController(Controller):
             previous = None
             while True:
                 await state.stream_manager.state_changed()
-                availability = state.stream_manager.availability()
+                availability = await state.stream_manager.availability()
                 if availability != previous:
                     notification = AvailableNotification(
                         availability=availability
