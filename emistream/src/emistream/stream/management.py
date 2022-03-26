@@ -1,19 +1,29 @@
 import asyncio
-from asyncio import Event
+from asyncio import Event, Lock
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Optional, Tuple
+
+import httpx
+from pystreams.ffmpeg import FFmpegNode, FFmpegStream
+from pystreams.srt import SRTNode
+from pystreams.stream import Stream as PyStream
 
 from emistream.config import config
+from emistream.models.record import (
+    RecordingRequest,
+    RecordingResponse,
+    Stream,
+    Token as RecordingToken,
+)
 from emistream.models.stream import Availability, Reservation, Token
-from emistream.stream.stream import SRTStream
 from emistream.utils import generate_uuid, thread
 
 
 class StreamManager:
     @dataclass
     class State:
-        stream: Optional[SRTStream]
+        stream: Optional[PyStream]
         reservation: Optional[Reservation]
         changed: Event
 
@@ -22,73 +32,133 @@ class StreamManager:
 
     def __init__(self, timeout: timedelta = DEFAULT_TIMEOUT) -> None:
         self.timeout = timeout
-        self.state = self.initial_state()
+        self.state = self._initial_state()
+        self.lock = Lock()
 
-    def initial_state(self) -> State:
+    def _initial_state(self) -> State:
         return self.State(None, None, Event())
 
-    def create_token(self) -> Token:
+    def _create_token(self) -> Token:
         return Token(
             token=generate_uuid(), expires_at=datetime.utcnow() + self.timeout
         )
 
-    def stream_parameters(self, token: str, title: str) -> Dict[str, Any]:
-        return {
-            "input_port": config.port,
-            "output_host": config.target_host,
-            "output_port": config.target_port,
-            "input_options": {
+    @staticmethod
+    def _recording_endpoint() -> str:
+        return f"http://{config.recording_host}:{config.recording_port}/record"
+
+    async def _get_recording_token(self, stream: Stream) -> RecordingToken:
+        async with httpx.AsyncClient() as client:
+            request = RecordingRequest(stream=stream)
+            response = await client.post(
+                self._recording_endpoint(), json=request.dict()
+            )
+            response = RecordingResponse(**response.json())
+            return response.token
+
+    async def _get_tokens(
+        self, reservation: Reservation
+    ) -> Tuple[Token, Optional[RecordingToken]]:
+        token = self._create_token()
+        recording_token = (
+            await self._get_recording_token(
+                Stream(
+                    title=reservation.title,
+                    planned_start=reservation.planned_start,
+                    planned_end=reservation.planned_end,
+                )
+            )
+            if reservation.record
+            else None
+        )
+        return token, recording_token
+
+    def _input_node(self, passphrase: str) -> FFmpegNode:
+        return SRTNode(
+            host="0.0.0.0",
+            port=config.port,
+            options={
+                "re": None,
                 "mode": "listener",
                 "listen_timeout": int(self.timeout.total_seconds() * 1000000),
-                "passphrase": token,
+                "passphrase": passphrase,
             },
-            "output_options": {
+        )
+
+    def _live_node(self, title: str) -> FFmpegNode:
+        return SRTNode(
+            host=config.live_host,
+            port=config.live_port,
+            options={
                 "acodec": "copy",
                 "metadata": f"title={title}",
                 "format": self.FORMAT,
             },
-        }
+        )
 
-    @staticmethod
-    def create_stream(params: Dict[str, Any]) -> SRTStream:
-        return SRTStream(**params)
+    def _recording_node(self, passphrase: str, title: str) -> FFmpegNode:
+        return SRTNode(
+            host=config.recording_host,
+            port=config.recording_port,
+            options={
+                "acodec": "copy",
+                "metadata": f"title={title}",
+                "format": self.FORMAT,
+                "passphrase": passphrase,
+                "pbkeylen": len(passphrase),
+            },
+        )
 
-    def set_state(self, stream: SRTStream, reservation: Reservation) -> None:
+    def _create_stream(
+        self,
+        token: Token,
+        reservation: Reservation,
+        recording_token: Optional[RecordingToken],
+    ) -> PyStream:
+        input = self._input_node(token.token)
+        output = [self._live_node(reservation.title)]
+        if recording_token is not None:
+            output.append(
+                self._recording_node(recording_token.token, reservation.title)
+            )
+        return FFmpegStream(input, output)
+
+    def _set_state(self, stream: PyStream, reservation: Reservation) -> None:
         self.state.stream = stream
         self.state.reservation = reservation
         self.state.changed.set()
         self.state.changed.clear()
 
-    def reset_state(self) -> None:
+    def _reset_state(self) -> None:
         self.state.stream = None
         self.state.reservation = None
         self.state.changed.set()
         self.state.changed.clear()
 
-    def start(self) -> None:
+    def _start(self) -> None:
         self.state.stream.start()
 
-    async def monitor(self) -> None:
+    async def _monitor(self) -> None:
         await thread(self.state.stream.wait)
-        self.reset_state()
+        self._reset_state()
 
     async def reserve(self, reservation: Reservation) -> Token:
-        if not self.availability().available:
-            raise RuntimeError("Stream is busy.")
-        token = self.create_token()
-        stream = self.create_stream(
-            self.stream_parameters(token.token, reservation.title)
-        )
-        self.set_state(stream, reservation)
-        self.start()
-        asyncio.create_task(self.monitor())
-        return token
+        async with self.lock:
+            if self.state.stream is not None:
+                raise RuntimeError("Stream is busy.")
+            token, recording_token = await self._get_tokens(reservation)
+            stream = self._create_stream(token, reservation, recording_token)
+            self._set_state(stream, reservation)
+            self._start()
+            asyncio.create_task(self._monitor())
+            return token
 
-    def availability(self) -> Availability:
-        return Availability(
-            available=self.state.stream is None,
-            reservation=self.state.reservation,
-        )
+    async def availability(self) -> Availability:
+        async with self.lock:
+            return Availability(
+                available=self.state.stream is None,
+                reservation=self.state.reservation,
+            )
 
     async def state_changed(self) -> None:
         await self.state.changed.wait()
