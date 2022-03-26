@@ -37,7 +37,7 @@ COPY ./emistream/LICENSE ./emistream/README.md /tmp/emistream/
 
 # build wheel by poetry and install by pip (to force non-editable mode)
 RUN poetry build -f wheel && \
-    python -m pip install --no-index --no-cache-dir --find-links=dist emistream
+    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
 
 ENV EMISTREAM_PORT=10000 \
     EMISTREAM_TARGET_HOST=localhost \
