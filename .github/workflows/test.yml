@@ -96,6 +96,6 @@ jobs:
         name: Install package
         working-directory: emistream
         # python from conda should be called just by 'python', not 'python3'
-        run: python -m pip install --no-index --no-cache-dir --find-links=dist emistream[test]
+        run: python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream[test]
       - name: Run tests
         run: pytest emistream
