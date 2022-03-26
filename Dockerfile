@@ -1,4 +1,6 @@
-FROM continuumio/miniconda3:4.10.3-alpine
+ARG MINICONDA_IMAGE_TAG=4.10.3-alpine
+
+FROM continuumio/miniconda3:$MINICONDA_IMAGE_TAG
 
 # add bash, because it's not available by default on alpine
 # and ffmpeg because we need it for streaming
@@ -35,7 +37,7 @@ COPY ./emistream/LICENSE ./emistream/README.md /tmp/emistream/
 
 # build wheel by poetry and install by pip (to force non-editable mode)
 RUN poetry build -f wheel && \
-    python -m pip install --no-index --no-cache-dir --find-links=dist emistream
+    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
 
 ENV EMISTREAM_PORT=10000 \
     EMISTREAM_TARGET_HOST=localhost \
