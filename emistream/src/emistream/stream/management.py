@@ -1,7 +1,8 @@
 import asyncio
+import json
 from asyncio import Event, Lock
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 
 import httpx
@@ -11,9 +12,9 @@ from pystreams.stream import Stream as PyStream
 
 from emistream.config import config
 from emistream.models.record import (
+    Event as StreamEvent,
     RecordingRequest,
     RecordingResponse,
-    Stream,
     Token as RecordingToken,
 )
 from emistream.models.stream import Availability, Reservation, Token
@@ -40,18 +41,19 @@ class StreamManager:
 
     def _create_token(self) -> Token:
         return Token(
-            token=generate_uuid(), expires_at=datetime.utcnow() + self.timeout
+            token=generate_uuid(),
+            expires_at=datetime.now(timezone.utc) + self.timeout,
         )
 
     @staticmethod
     def _recording_endpoint() -> str:
         return f"http://{config.recording_host}:{config.recording_port}/record"
 
-    async def _get_recording_token(self, stream: Stream) -> RecordingToken:
+    async def _get_recording_token(self, event: StreamEvent) -> RecordingToken:
         async with httpx.AsyncClient() as client:
-            request = RecordingRequest(stream=stream)
+            request = RecordingRequest(event=event)
             response = await client.post(
-                self._recording_endpoint(), json=request.dict()
+                self._recording_endpoint(), json=json.loads(request.json())
             )
             response = RecordingResponse(**response.json())
             return response.token
@@ -61,13 +63,7 @@ class StreamManager:
     ) -> Tuple[Token, Optional[RecordingToken]]:
         token = self._create_token()
         recording_token = (
-            await self._get_recording_token(
-                Stream(
-                    title=reservation.title,
-                    planned_start=reservation.planned_start,
-                    planned_end=reservation.planned_end,
-                )
-            )
+            await self._get_recording_token(reservation.event)
             if reservation.record
             else None
         )
@@ -112,14 +108,14 @@ class StreamManager:
     def _create_stream(
         self,
         token: Token,
-        reservation: Reservation,
+        event: StreamEvent,
         recording_token: Optional[RecordingToken],
     ) -> PyStream:
         input = self._input_node(token.token)
-        output = [self._live_node(reservation.title)]
+        output = [self._live_node(event.title)]
         if recording_token is not None:
             output.append(
-                self._recording_node(recording_token.token, reservation.title)
+                self._recording_node(recording_token.token, event.title)
             )
         return FFmpegStream(input, output)
 
@@ -147,7 +143,9 @@ class StreamManager:
             if self.state.stream is not None:
                 raise RuntimeError("Stream is busy.")
             token, recording_token = await self._get_tokens(reservation)
-            stream = self._create_stream(token, reservation, recording_token)
+            stream = self._create_stream(
+                token, reservation.event, recording_token
+            )
             self._set_state(stream, reservation)
             self._start()
             asyncio.create_task(self._monitor())

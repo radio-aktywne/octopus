@@ -1,13 +1,8 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
-
-class Stream(BaseModel):
-    title: str = "Unknown"
-    planned_start: Optional[datetime] = None
-    planned_end: Optional[datetime] = None
+from emistream.models.stream import Event
 
 
 class Token(BaseModel):
@@ -16,7 +11,7 @@ class Token(BaseModel):
 
 
 class RecordingRequest(BaseModel):
-    stream: Stream
+    event: Event
 
 
 class RecordingResponse(BaseModel):

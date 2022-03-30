@@ -4,10 +4,15 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class Event(BaseModel):
+    id: str
+    title: str
+    start: Optional[datetime] = None
+    end: Optional[datetime] = None
+
+
 class Reservation(BaseModel):
-    title: str = "Unknown"
-    planned_start: Optional[datetime] = None
-    planned_end: Optional[datetime] = None
+    event: Event
     record: bool = True
 
 

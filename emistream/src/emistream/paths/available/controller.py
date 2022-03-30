@@ -1,5 +1,7 @@
+import json
+
 from starlite import Controller, State, WebSocket, get, websocket
-from websockets.exceptions import ConnectionClosedError
+from websockets.exceptions import WebSocketException
 
 from emistream.models.available import AvailableNotification, AvailableResponse
 
@@ -25,10 +27,12 @@ class AvailableController(Controller):
                     notification = AvailableNotification(
                         availability=availability
                     )
-                    await socket.send_json(notification.json())
+                    await socket.send_json(json.loads(notification.json()))
                     previous = availability
+        except (ConnectionError, WebSocketException):
+            pass
         finally:
             try:
                 await socket.close()
-            except ConnectionClosedError:
+            except (ConnectionError, WebSocketException):
                 pass
