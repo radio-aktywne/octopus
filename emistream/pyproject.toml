@@ -12,6 +12,7 @@ documentation = "https://radio-aktywne.github.io/emistream"
 [tool.poetry.dependencies]
 python = "^3.9"
 typer = { version = "^0.4", extras = ["all"] }
+click = "~8.0.0"
 starlite = "^1.2"
 uvicorn = { version = "^0.17", extras = ["standard"] }
 pystreams = { git = "https://github.com/radio-aktywne/pystreams.git", tag = "0.1.1" }
