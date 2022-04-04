@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "emistream"
-version = "0.2.0"
-description = "Emission with WebRTC 🌈"
+version = "0.3.0"
+description = "emission streaming logic 🔴"
 readme = "README.md"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 classifiers = ["License :: OSI Approved :: MIT License",
