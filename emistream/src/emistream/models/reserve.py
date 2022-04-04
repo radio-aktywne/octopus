@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 
-from emistream.models.stream import Reservation, Token
+from emistream.models.stream import Event, Token
 
 
 class ReserveRequest(BaseModel):
-    reservation: Reservation
+    event: Event
+    record: bool = True
 
 
 class ReserveResponse(BaseModel):

@@ -1,9 +1,9 @@
 import asyncio
 import json
-from asyncio import Event, Lock
+from asyncio import Event as AsyncioEvent, Lock
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import httpx
 from pystreams.ffmpeg import FFmpegNode, FFmpegStream
@@ -12,12 +12,11 @@ from pystreams.stream import Stream as PyStream
 
 from emistream.config import config
 from emistream.models.record import (
-    Event as StreamEvent,
     RecordingRequest,
     RecordingResponse,
     Token as RecordingToken,
 )
-from emistream.models.stream import Availability, Reservation, Token
+from emistream.models.stream import Availability, Event, Token
 from emistream.utils import generate_uuid, thread
 
 
@@ -25,8 +24,8 @@ class StreamManager:
     @dataclass
     class State:
         stream: Optional[PyStream]
-        reservation: Optional[Reservation]
-        changed: Event
+        event: Optional[Event]
+        changed: AsyncioEvent
 
     DEFAULT_TIMEOUT = timedelta(seconds=60)
     FORMAT = "ogg"
@@ -37,7 +36,7 @@ class StreamManager:
         self.lock = Lock()
 
     def _initial_state(self) -> State:
-        return self.State(None, None, Event())
+        return self.State(None, None, AsyncioEvent())
 
     def _create_token(self) -> Token:
         return Token(
@@ -49,7 +48,7 @@ class StreamManager:
     def _recording_endpoint() -> str:
         return f"http://{config.recording_host}:{config.recording_port}/record"
 
-    async def _get_recording_token(self, event: StreamEvent) -> RecordingToken:
+    async def _get_recording_token(self, event: Event) -> RecordingToken:
         async with httpx.AsyncClient() as client:
             request = RecordingRequest(event=event)
             response = await client.post(
@@ -59,13 +58,11 @@ class StreamManager:
             return response.token
 
     async def _get_tokens(
-        self, reservation: Reservation
+        self, event: Event, record: bool
     ) -> Tuple[Token, Optional[RecordingToken]]:
         token = self._create_token()
         recording_token = (
-            await self._get_recording_token(reservation.event)
-            if reservation.record
-            else None
+            await self._get_recording_token(event) if record else None
         )
         return token, recording_token
 
@@ -81,24 +78,30 @@ class StreamManager:
             },
         )
 
-    def _live_node(self, title: str) -> FFmpegNode:
+    @staticmethod
+    def _metadata_values(metadata: Dict[str, str]) -> List[str]:
+        return [f"{key}={value}" for key, value in metadata.items()]
+
+    def _live_node(self, metadata: Dict[str, str]) -> FFmpegNode:
         return SRTNode(
             host=config.live_host,
             port=config.live_port,
             options={
                 "acodec": "copy",
-                "metadata": f"title={title}",
+                "metadata": self._metadata_values(metadata),
                 "format": self.FORMAT,
             },
         )
 
-    def _recording_node(self, passphrase: str, title: str) -> FFmpegNode:
+    def _recording_node(
+        self, passphrase: str, metadata: Dict[str, str]
+    ) -> FFmpegNode:
         return SRTNode(
             host=config.recording_host,
             port=config.recording_port,
             options={
                 "acodec": "copy",
-                "metadata": f"title={title}",
+                "metadata": self._metadata_values(metadata),
                 "format": self.FORMAT,
                 "passphrase": passphrase,
                 "pbkeylen": len(passphrase),
@@ -108,26 +111,27 @@ class StreamManager:
     def _create_stream(
         self,
         token: Token,
-        event: StreamEvent,
+        event: Event,
         recording_token: Optional[RecordingToken],
     ) -> PyStream:
+        metadata = event.show.metadata | event.metadata
         input = self._input_node(token.token)
-        output = [self._live_node(event.title)]
+        output = [self._live_node(metadata)]
         if recording_token is not None:
             output.append(
-                self._recording_node(recording_token.token, event.title)
+                self._recording_node(recording_token.token, metadata)
             )
         return FFmpegStream(input, output)
 
-    def _set_state(self, stream: PyStream, reservation: Reservation) -> None:
+    def _set_state(self, stream: PyStream, event: Event) -> None:
         self.state.stream = stream
-        self.state.reservation = reservation
+        self.state.event = event
         self.state.changed.set()
         self.state.changed.clear()
 
     def _reset_state(self) -> None:
         self.state.stream = None
-        self.state.reservation = None
+        self.state.event = None
         self.state.changed.set()
         self.state.changed.clear()
 
@@ -138,15 +142,13 @@ class StreamManager:
         await thread(self.state.stream.wait)
         self._reset_state()
 
-    async def reserve(self, reservation: Reservation) -> Token:
+    async def reserve(self, event: Event, record: bool) -> Token:
         async with self.lock:
             if self.state.stream is not None:
                 raise RuntimeError("Stream is busy.")
-            token, recording_token = await self._get_tokens(reservation)
-            stream = self._create_stream(
-                token, reservation.event, recording_token
-            )
-            self._set_state(stream, reservation)
+            token, recording_token = await self._get_tokens(event, record)
+            stream = self._create_stream(token, event, recording_token)
+            self._set_state(stream, event)
             self._start()
             asyncio.create_task(self._monitor())
             return token
@@ -155,7 +157,7 @@ class StreamManager:
         async with self.lock:
             return Availability(
                 available=self.state.stream is None,
-                reservation=self.state.reservation,
+                event=self.state.event,
             )
 
     async def state_changed(self) -> None:

@@ -11,5 +11,5 @@ class ReserveController(Controller):
         self, state: State, data: ReserveRequest
     ) -> ReserveResponse:
         return ReserveResponse(
-            token=await state.stream_manager.reserve(data.reservation)
+            token=await state.stream_manager.reserve(data.event, data.record)
         )
