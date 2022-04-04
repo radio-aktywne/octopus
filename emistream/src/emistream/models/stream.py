@@ -1,24 +1,24 @@
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel
 
 
+class Show(BaseModel):
+    label: str
+    metadata: Dict[str, str] = {}
+
+
 class Event(BaseModel):
-    id: str
-    title: str
+    show: Show
     start: Optional[datetime] = None
     end: Optional[datetime] = None
-
-
-class Reservation(BaseModel):
-    event: Event
-    record: bool = True
+    metadata: Dict[str, str] = {}
 
 
 class Availability(BaseModel):
     available: bool
-    reservation: Optional[Reservation] = None
+    event: Optional[Event] = None
 
 
 class Token(BaseModel):
