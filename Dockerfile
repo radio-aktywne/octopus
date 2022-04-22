@@ -1,6 +1,6 @@
 ARG MINICONDA_IMAGE_TAG=4.10.3-alpine
 
-FROM continuumio/miniconda3:$MINICONDA_IMAGE_TAG
+FROM continuumio/miniconda3:$MINICONDA_IMAGE_TAG AS base
 
 # add bash, because it's not available by default on alpine
 # and ffmpeg because we need it for streaming
@@ -28,6 +28,36 @@ SHELL ["conda", "run", "--no-capture-output", "-n", "emistream", "/bin/bash", "-
 COPY ./emistream/pyproject.toml ./emistream/poetry.lock /tmp/emistream/
 WORKDIR /tmp/emistream
 
+ENV EMISTREAM_PORT=10000 \
+    EMISTREAM_LIVE_HOST=localhost \
+    EMISTREAM_LIVE_PORT=9000 \
+    EMISTREAM_RECORDING_HOST=localhost \
+    EMISTREAM_RECORDING_PORT=31000
+
+EXPOSE 10000
+EXPOSE 10000/udp
+
+ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "emistream"]
+
+FROM base AS test
+
+# install dependencies only (notice that no source code is present yet) and delete cache
+RUN poetry install --no-root --extras test && \
+    rm -rf ~/.cache/pypoetry
+
+# add source, tests and necessary files
+COPY ./emistream/src/ /tmp/emistream/src/
+COPY ./emistream/tests/ /tmp/emistream/tests/
+COPY ./emistream/LICENSE ./emistream/README.md /tmp/emistream/
+
+# build wheel by poetry and install by pip (to force non-editable mode)
+RUN poetry build -f wheel && \
+    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
+
+CMD ["pytest"]
+
+FROM base AS production
+
 # install dependencies only (notice that no source code is present yet) and delete cache
 RUN poetry install --no-root && \
     rm -rf ~/.cache/pypoetry
@@ -40,13 +70,4 @@ COPY ./emistream/LICENSE ./emistream/README.md /tmp/emistream/
 RUN poetry build -f wheel && \
     python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
 
-ENV EMISTREAM_PORT=10000 \
-    EMISTREAM_LIVE_HOST=localhost \
-    EMISTREAM_LIVE_PORT=9000 \
-    EMISTREAM_RECORDING_HOST=localhost \
-    EMISTREAM_RECORDING_PORT=31000
-
-EXPOSE 10000
-EXPOSE 10000/udp
-
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "emistream", "emistream", "--port", "10000"]
+CMD ["emistream", "--port", "10000"]

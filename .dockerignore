@@ -1,5 +1,6 @@
 *
 !emistream/src/**
+!emistream/tests/**
 !emistream/pyproject.toml
 !emistream/poetry.lock
 !emistream/LICENSE
