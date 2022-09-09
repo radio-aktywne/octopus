@@ -28,7 +28,7 @@ class StreamManager:
         changed: AsyncioEvent
 
     DEFAULT_TIMEOUT = timedelta(seconds=60)
-    FORMAT = "ogg"
+    FORMAT = "opus"
 
     def __init__(self, timeout: timedelta = DEFAULT_TIMEOUT) -> None:
         self.timeout = timeout
