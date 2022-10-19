@@ -7,28 +7,67 @@ FROM continuumio/miniconda3:$MINICONDA_IMAGE_TAG AS base
 # and git to get pystreams
 RUN apk add --no-cache bash ffmpeg git
 
+WORKDIR /app/
+
 # install poetry
-COPY ./requirements.txt /tmp/requirements.txt
-RUN python3 -m pip install --no-cache-dir -r /tmp/requirements.txt
+COPY ./requirements.txt ./requirements.txt
+RUN --mount=type=cache,target=/root/.cache \
+    python3 -m pip install -r ./requirements.txt
 
 # create new environment
-# see: https://jcristharif.com/conda-docker-tips.html
 # warning: for some reason conda can hang on "Executing transaction" for a couple of minutes
-COPY environment.yml /tmp/environment.yml
-RUN conda env create -f /tmp/environment.yml && \
-    conda clean -afy && \
-    find /opt/conda/ -follow -type f -name '*.a' -delete && \
-    find /opt/conda/ -follow -type f -name '*.pyc' -delete && \
-    find /opt/conda/ -follow -type f -name '*.js.map' -delete
+COPY environment.yaml ./environment.yaml
+RUN --mount=type=cache,target=/opt/conda/pkgs \
+    conda env create -f ./environment.yaml
 
 # "activate" environment for all commands (note: ENTRYPOINT is separate from SHELL)
 SHELL ["conda", "run", "--no-capture-output", "-n", "emistream", "/bin/bash", "-c"]
 
-# add poetry files
-COPY ./emistream/pyproject.toml ./emistream/poetry.lock /tmp/emistream/
-WORKDIR /tmp/emistream
+WORKDIR /app/emistream/
 
-ENV EMISTREAM_PORT=10000 \
+# add poetry files
+COPY ./emistream/pyproject.toml ./emistream/poetry.lock ./
+
+FROM base AS test
+
+# install dependencies only (notice that no source code is present yet)
+RUN --mount=type=cache,target=/root/.cache \
+    poetry install --no-root --only main,test
+
+# add source, tests and necessary files
+COPY ./emistream/src/ ./src/
+COPY ./emistream/tests/ ./tests/
+COPY ./emistream/LICENSE ./emistream/README.md ./
+
+# build wheel by poetry and install by pip (to force non-editable mode)
+RUN poetry build -f wheel && \
+    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
+
+# add entrypoint
+COPY ./entrypoint.sh ./entrypoint.sh
+
+ENTRYPOINT ["./entrypoint.sh", "pytest"]
+CMD []
+
+FROM base AS production
+
+# install dependencies only (notice that no source code is present yet)
+RUN --mount=type=cache,target=/root/.cache \
+    poetry install --no-root --only main
+
+# add source and necessary files
+COPY ./emistream/src/ ./src/
+COPY ./emistream/LICENSE ./emistream/README.md ./
+
+# build wheel by poetry and install by pip (to force non-editable mode)
+RUN poetry build -f wheel && \
+    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
+
+# add entrypoint
+COPY ./entrypoint.sh ./entrypoint.sh
+
+ENV EMISTREAM_HOST=0.0.0.0 \
+    EMISTREAM_PORT=10000 \
     EMISTREAM_LIVE_HOST=localhost \
     EMISTREAM_LIVE_PORT=9000 \
     EMISTREAM_RECORDING_HOST=localhost \
@@ -37,37 +76,5 @@ ENV EMISTREAM_PORT=10000 \
 EXPOSE 10000
 EXPOSE 10000/udp
 
-ENTRYPOINT ["conda", "run", "--no-capture-output", "-n", "emistream"]
-
-FROM base AS test
-
-# install dependencies only (notice that no source code is present yet) and delete cache
-RUN poetry install --no-root --extras test && \
-    rm -rf ~/.cache/pypoetry
-
-# add source, tests and necessary files
-COPY ./emistream/src/ /tmp/emistream/src/
-COPY ./emistream/tests/ /tmp/emistream/tests/
-COPY ./emistream/LICENSE ./emistream/README.md /tmp/emistream/
-
-# build wheel by poetry and install by pip (to force non-editable mode)
-RUN poetry build -f wheel && \
-    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
-
-CMD ["pytest"]
-
-FROM base AS production
-
-# install dependencies only (notice that no source code is present yet) and delete cache
-RUN poetry install --no-root && \
-    rm -rf ~/.cache/pypoetry
-
-# add source and necessary files
-COPY ./emistream/src/ /tmp/emistream/src/
-COPY ./emistream/LICENSE ./emistream/README.md /tmp/emistream/
-
-# build wheel by poetry and install by pip (to force non-editable mode)
-RUN poetry build -f wheel && \
-    python -m pip install --no-deps --no-index --no-cache-dir --find-links=dist emistream
-
-CMD ["emistream", "--port", "10000"]
+ENTRYPOINT ["./entrypoint.sh", "emistream"]
+CMD []

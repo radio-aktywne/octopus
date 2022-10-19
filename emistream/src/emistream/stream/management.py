@@ -10,7 +10,7 @@ from pystreams.ffmpeg import FFmpegNode, FFmpegStream
 from pystreams.srt import SRTNode
 from pystreams.stream import Stream as PyStream
 
-from emistream.config import config
+from emistream.config import Config
 from emistream.models.record import (
     RecordingRequest,
     RecordingResponse,
@@ -30,7 +30,10 @@ class StreamManager:
     DEFAULT_TIMEOUT = timedelta(seconds=60)
     FORMAT = "opus"
 
-    def __init__(self, timeout: timedelta = DEFAULT_TIMEOUT) -> None:
+    def __init__(
+        self, config: Config, timeout: timedelta = DEFAULT_TIMEOUT
+    ) -> None:
+        self.config = config
         self.timeout = timeout
         self.state = self._initial_state()
         self.lock = Lock()
@@ -45,14 +48,17 @@ class StreamManager:
         )
 
     @staticmethod
-    def _recording_endpoint() -> str:
-        return f"http://{config.recording_host}:{config.recording_port}/record"
+    def _recording_endpoint(host: str, port: int) -> str:
+        return f"http://{host}:{port}/record"
 
     async def _get_recording_token(self, event: Event) -> RecordingToken:
         async with httpx.AsyncClient() as client:
+            endpoint = self._recording_endpoint(
+                self.config.recording_host, self.config.recording_port
+            )
             request = RecordingRequest(event=event)
             response = await client.post(
-                self._recording_endpoint(), json=json.loads(request.json())
+                endpoint, json=json.loads(request.json())
             )
             response = RecordingResponse(**response.json())
             return response.token
@@ -68,8 +74,8 @@ class StreamManager:
 
     def _input_node(self, passphrase: str) -> FFmpegNode:
         return SRTNode(
-            host="0.0.0.0",
-            port=config.port,
+            host=self.config.host,
+            port=str(self.config.port),
             options={
                 "re": None,
                 "mode": "listener",
@@ -84,8 +90,8 @@ class StreamManager:
 
     def _live_node(self, metadata: Dict[str, str]) -> FFmpegNode:
         return SRTNode(
-            host=config.live_host,
-            port=config.live_port,
+            host=self.config.live_host,
+            port=str(self.config.live_port),
             options={
                 "acodec": "copy",
                 "metadata": self._metadata_values(metadata),
@@ -97,8 +103,8 @@ class StreamManager:
         self, passphrase: str, metadata: Dict[str, str]
     ) -> FFmpegNode:
         return SRTNode(
-            host=config.recording_host,
-            port=config.recording_port,
+            host=self.config.recording_host,
+            port=str(self.config.recording_port),
             options={
                 "acodec": "copy",
                 "metadata": self._metadata_values(metadata),
