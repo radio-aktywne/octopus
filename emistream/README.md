@@ -4,8 +4,9 @@
 
 emission streaming logic 🔴
 
-[![Tests](https://github.com/radio-aktywne/emistream/actions/workflows/test-docker.yml/badge.svg)](https://github.com/radio-aktywne/emistream/actions/workflows/test-docker.yml)
-[![Docs](https://github.com/radio-aktywne/emistream/actions/workflows/docs.yml/badge.svg)](https://github.com/radio-aktywne/emistream/actions/workflows/docs.yml)
+[![Lint](https://github.com/radio-aktywne/emistream/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/emistream/actions/workflows/lint.yaml)
+[![Tests](https://github.com/radio-aktywne/emistream/actions/workflows/test-docker.yaml/badge.svg)](https://github.com/radio-aktywne/emistream/actions/workflows/test-docker.yaml)
+[![Docs](https://github.com/radio-aktywne/emistream/actions/workflows/docs.yaml/badge.svg)](https://github.com/radio-aktywne/emistream/actions/workflows/docs.yaml)
 
 </div>
 
