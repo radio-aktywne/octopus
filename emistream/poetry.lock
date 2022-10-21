@@ -517,6 +517,14 @@ python-versions = ">=3.6"
 plugins = ["importlib-metadata"]
 
 [[package]]
+name = "pyhumps"
+version = "3.8.0"
+description = "🐫  Convert strings (and dictionary keys) between snake case, camel case and pascal case in Python. Inspired by Humps for Node"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pymdown-extensions"
 version = "9.6"
 description = "Extension pack for Python Markdown."
@@ -705,7 +713,7 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart", "pyyam
 
 [[package]]
 name = "starlite"
-version = "1.29.0"
+version = "1.30.0"
 description = "Light-weight and flexible ASGI API Framework"
 category = "main"
 optional = false
@@ -777,6 +785,14 @@ description = "Backported and Experimental Type Hints for Python 3.7+"
 category = "main"
 optional = false
 python-versions = ">=3.7"
+
+[[package]]
+name = "tzdata"
+version = "2022.5"
+description = "Provider of IANA time zone data"
+category = "main"
+optional = false
+python-versions = ">=2"
 
 [[package]]
 name = "urllib3"
@@ -868,7 +884,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "bd08bfb10fcb3ab3ecb13a7e863b71e72ad66a39fc44ca1733b3dd875a472ffe"
+content-hash = "4f727dca28008a58cb315acaa89e87fb32a3e0070d048554321ce59785897d2f"
 
 [metadata.files]
 antlr4-python3-runtime = [
@@ -1231,6 +1247,10 @@ pygments = [
     {file = "Pygments-2.13.0-py3-none-any.whl", hash = "sha256:f643f331ab57ba3c9d89212ee4a2dabc6e94f117cf4eefde99a0574720d14c42"},
     {file = "Pygments-2.13.0.tar.gz", hash = "sha256:56a8508ae95f98e2b9bdf93a6be5ae3f7d8af858b43e02c5a2ff083726be40c1"},
 ]
+pyhumps = [
+    {file = "pyhumps-3.8.0-py3-none-any.whl", hash = "sha256:060e1954d9069f428232a1adda165db0b9d8dfdce1d265d36df7fbff540acfd6"},
+    {file = "pyhumps-3.8.0.tar.gz", hash = "sha256:498026258f7ee1a8e447c2e28526c0bea9407f9a59c03260aee4bd6c04d681a3"},
+]
 pymdown-extensions = [
     {file = "pymdown_extensions-9.6-py3-none-any.whl", hash = "sha256:1e36490adc7bfcef1fdb21bb0306e93af99cff8ec2db199bd17e3bf009768c11"},
     {file = "pymdown_extensions-9.6.tar.gz", hash = "sha256:b956b806439bbff10f726103a941266beb03fbe99f897c7d5e774d7170339ad9"},
@@ -1327,8 +1347,8 @@ starlette = [
     {file = "starlette-0.21.0.tar.gz", hash = "sha256:b1b52305ee8f7cfc48cde383496f7c11ab897cd7112b33d998b1317dc8ef9027"},
 ]
 starlite = [
-    {file = "starlite-1.29.0-py3-none-any.whl", hash = "sha256:1ae1f9530da44ebebf7fce9c7e6822e5e96effc5f36fe40b2e134ea7ab402220"},
-    {file = "starlite-1.29.0.tar.gz", hash = "sha256:b871551ba9ae448b9477a218e663e6fab4846b60f03c2a090997d5ddbe564a70"},
+    {file = "starlite-1.30.0-py3-none-any.whl", hash = "sha256:9914f74c72dff57dc859511b7ba474958d34632625e7cd4921f5cf615b011048"},
+    {file = "starlite-1.30.0.tar.gz", hash = "sha256:45eb5c8c214711946cb055abe361ba2bf57bfdef8c137b1f3f3c8ad772f757ae"},
 ]
 starlite-multipart = [
     {file = "starlite-multipart-1.2.0.tar.gz", hash = "sha256:9ba2108cfd47de07240dc90e55397080ec9ca0c6992ec1097a02dd32ba4ca593"},
@@ -1345,6 +1365,10 @@ typer = [
 typing-extensions = [
     {file = "typing_extensions-4.4.0-py3-none-any.whl", hash = "sha256:16fa4864408f655d35ec496218b85f79b3437c829e93320c7c9215ccfd92489e"},
     {file = "typing_extensions-4.4.0.tar.gz", hash = "sha256:1511434bb92bf8dd198c12b1cc812e800d4181cfcb867674e0f8279cc93087aa"},
+]
+tzdata = [
+    {file = "tzdata-2022.5-py2.py3-none-any.whl", hash = "sha256:323161b22b7802fdc78f20ca5f6073639c64f1a7227c40cd3e19fd1d0ce6650a"},
+    {file = "tzdata-2022.5.tar.gz", hash = "sha256:e15b2b3005e2546108af42a0eb4ccab4d9e225e2dfbf4f77aad50c70a4b1f3ab"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.12-py2.py3-none-any.whl", hash = "sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997"},
