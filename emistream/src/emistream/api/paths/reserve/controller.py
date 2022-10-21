@@ -1,6 +1,6 @@
 from starlite import Controller, State, post
 
-from emistream.models.reserve import ReserveRequest, ReserveResponse
+from emistream.api.paths.reserve.models import ReserveRequest, ReserveResponse
 
 
 class ReserveController(Controller):

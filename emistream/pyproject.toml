@@ -18,6 +18,8 @@ starlite = "^1.2"
 uvicorn = { version = "^0.17", extras = ["standard"] }
 pystreams = { git = "https://github.com/radio-aktywne/pystreams.git", tag = "0.1.2", subdirectory = "pystreams" }
 httpx = "^0.23"
+pyhumps = "^3.7"
+tzdata = "*"
 
 [tool.poetry.group.poe.dependencies]
 poethepoet = "^0.16"

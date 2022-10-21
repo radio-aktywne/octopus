@@ -1,23 +1,23 @@
 import asyncio
-import json
 from asyncio import Event as AsyncioEvent, Lock
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
-import httpx
 from pystreams.ffmpeg import FFmpegNode, FFmpegStream
 from pystreams.srt import SRTNode
 from pystreams.stream import Stream as PyStream
 
 from emistream.config import Config
-from emistream.models.record import (
-    RecordingRequest,
-    RecordingResponse,
-    Token as RecordingToken,
+from emistream.fusion.client import FusionClient
+from emistream.models.data import Event, Token, Availability
+from emistream.recorder.client import RecorderClient
+from emistream.recorder.models.data import (
+    Token as RecorderToken,
+    Event as RecorderEvent,
+    Show as RecorderShow,
 )
-from emistream.models.stream import Availability, Event, Token
-from emistream.utils import generate_uuid, thread
+from emistream.utils import generate_uuid, background
 
 
 class StreamManager:
@@ -27,14 +27,12 @@ class StreamManager:
         event: Optional[Event]
         changed: AsyncioEvent
 
-    DEFAULT_TIMEOUT = timedelta(seconds=60)
-    FORMAT = "opus"
-
     def __init__(
-        self, config: Config, timeout: timedelta = DEFAULT_TIMEOUT
+        self, config: Config, recorder: RecorderClient, fusion: FusionClient
     ) -> None:
         self.config = config
-        self.timeout = timeout
+        self.recorder = recorder
+        self.fusion = fusion
         self.state = self._initial_state()
         self.lock = Lock()
 
@@ -44,28 +42,29 @@ class StreamManager:
     def _create_token(self) -> Token:
         return Token(
             token=generate_uuid(),
-            expires_at=datetime.now(timezone.utc) + self.timeout,
+            expires_at=datetime.now(timezone.utc)
+            + timedelta(seconds=self.config.timeout),
         )
 
     @staticmethod
-    def _recording_endpoint(host: str, port: int) -> str:
-        return f"http://{host}:{port}/record"
+    def _map_event(event: Event) -> RecorderEvent:
+        return RecorderEvent(
+            show=RecorderShow(
+                label=event.show.label,
+                metadata=event.show.metadata,
+            ),
+            start=event.start,
+            end=event.end,
+            metadata=event.metadata,
+        )
 
-    async def _get_recording_token(self, event: Event) -> RecordingToken:
-        async with httpx.AsyncClient() as client:
-            endpoint = self._recording_endpoint(
-                self.config.recording_host, self.config.recording_port
-            )
-            request = RecordingRequest(event=event)
-            response = await client.post(
-                endpoint, json=json.loads(request.json())
-            )
-            response = RecordingResponse(**response.json())
-            return response.token
+    async def _get_recording_token(self, event: Event) -> RecorderToken:
+        event = self._map_event(event)
+        return await self.recorder.record(event)
 
     async def _get_tokens(
         self, event: Event, record: bool
-    ) -> Tuple[Token, Optional[RecordingToken]]:
+    ) -> Tuple[Token, Optional[RecorderToken]]:
         token = self._create_token()
         recording_token = (
             await self._get_recording_token(event) if record else None
@@ -79,7 +78,7 @@ class StreamManager:
             options={
                 "re": None,
                 "mode": "listener",
-                "listen_timeout": int(self.timeout.total_seconds() * 1000000),
+                "listen_timeout": int(self.config.timeout * 1000000),
                 "passphrase": passphrase,
             },
         )
@@ -89,36 +88,24 @@ class StreamManager:
         return [f"{key}={value}" for key, value in metadata.items()]
 
     def _live_node(self, metadata: Dict[str, str]) -> FFmpegNode:
-        return SRTNode(
-            host=self.config.live_host,
-            port=str(self.config.live_port),
-            options={
-                "acodec": "copy",
-                "metadata": self._metadata_values(metadata),
-                "format": self.FORMAT,
-            },
+        return self.fusion.get_stream_node(
+            metadata=self._metadata_values(metadata)
         )
 
     def _recording_node(
         self, passphrase: str, metadata: Dict[str, str]
     ) -> FFmpegNode:
-        return SRTNode(
-            host=self.config.recording_host,
-            port=str(self.config.recording_port),
-            options={
-                "acodec": "copy",
-                "metadata": self._metadata_values(metadata),
-                "format": self.FORMAT,
-                "passphrase": passphrase,
-                "pbkeylen": len(passphrase),
-            },
+        return self.recorder.get_stream_node(
+            metadata=self._metadata_values(metadata),
+            passphrase=passphrase,
+            pbkeylen=len(passphrase),
         )
 
     def _create_stream(
         self,
         token: Token,
         event: Event,
-        recording_token: Optional[RecordingToken],
+        recording_token: Optional[RecorderToken],
     ) -> PyStream:
         metadata = event.show.metadata | event.metadata
         input = self._input_node(token.token)
@@ -145,7 +132,7 @@ class StreamManager:
         self.state.stream.start()
 
     async def _monitor(self) -> None:
-        await thread(self.state.stream.wait)
+        await background(self.state.stream.wait)
         self._reset_state()
 
     async def reserve(self, event: Event, record: bool) -> Token:

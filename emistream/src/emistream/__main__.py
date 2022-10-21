@@ -7,12 +7,12 @@ import logging
 from typing import List, Optional
 
 import typer
-import uvicorn
 from typer import FileText
 
 from emistream import log
-from emistream.app import build_app
+from emistream.api.app import build
 from emistream.config import get_config
+from emistream.server import run
 
 cli = typer.Typer()  # this is actually callable and thus can be an entry point
 
@@ -43,8 +43,9 @@ def main(
         raise typer.Exit(1)
     logger.info("Config loaded!")
 
-    app = build_app(config)
-    uvicorn.run(app, host=config.host, port=config.port)
+    app = build(config)
+
+    run(app, config)
 
 
 if __name__ == "__main__":
