@@ -14,9 +14,9 @@ emission streaming logic 🔴
 
 This `README` provides info about the development process.
 
-For more info about the package itself
-see `emistream/README.md`
-or [docs](https://radio-aktywne.github.io/emistream).
+For more info about the package itself see
+[package `README`](emistream/README.md) or
+[docs](https://radio-aktywne.github.io/emistream).
 
 ## Quickstart (on Ubuntu)
 
