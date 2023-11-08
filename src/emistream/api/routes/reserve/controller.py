@@ -3,16 +3,13 @@ from litestar import Response, post
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 
-from emistream.api.routes.reserve.errors import (
-    AlreadyReservedError,
-    RecorderUnavailableError,
-)
+from emistream.api.exceptions import ConflictException
+from emistream.api.routes.reserve.errors import StreamBusyError
 from emistream.api.routes.reserve.models import PostRequest, PostResponse
 from emistream.api.routes.reserve.service import Service
 from emistream.emirecorder.client import EmirecorderAPI
 from emistream.state import State
 from emistream.stream.controller import StreamController
-from emistream.stream.errors import RecorderError, StreamBusyError
 from emistream.stream.runner import StreamRunner
 
 
@@ -34,7 +31,7 @@ class DependenciesBuilder:
             ),
         )
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> dict[str, Provide]:
         return {
             "service": Provide(self._build_service),
         }
@@ -48,15 +45,14 @@ class Controller(BaseController):
     @post(
         summary="Reserve a stream",
         description="Reserve a stream to be able to go live",
-        raises=[AlreadyReservedError, RecorderUnavailableError],
+        raises=[ConflictException],
     )
     async def post(self, data: PostRequest, service: Service) -> Response[PostResponse]:
         try:
             reservation = await service.reserve(data.request)
         except StreamBusyError as e:
-            raise AlreadyReservedError(e.event) from e
-        except RecorderError as e:
-            raise RecorderUnavailableError() from e
+            extra = {"event": e.event.model_dump(mode="json", by_alias=True)}
+            raise ConflictException(extra=extra) from e
 
         content = PostResponse(reservation=reservation)
         return Response(content)

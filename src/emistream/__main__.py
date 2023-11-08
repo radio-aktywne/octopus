@@ -2,10 +2,11 @@ from typing import Optional
 
 import typer
 
-from emistream.api import AppBuilder
+from emistream.api.app import AppBuilder
 from emistream.cli import CliBuilder
-from emistream.config import ConfigBuilder, ConfigError
-from emistream.console import EmergencyConsoleBuilder
+from emistream.config.builder import ConfigBuilder
+from emistream.config.errors import ConfigError
+from emistream.console import FallbackConsoleBuilder
 from emistream.server import Server
 
 cli = CliBuilder().build()
@@ -29,28 +30,28 @@ def main(
 ) -> None:
     """Main entry point."""
 
-    emergency = EmergencyConsoleBuilder().build()
+    console = FallbackConsoleBuilder().build()
 
     try:
         config = ConfigBuilder(config_file, config_overrides).build()
     except ConfigError as e:
-        emergency.print("Failed to load config!")
-        emergency.print_exception()
+        console.print("Failed to load config!")
+        console.print_exception()
         raise typer.Exit(1) from e
 
     try:
         app = AppBuilder(config).build()
     except Exception as e:
-        emergency.print("Failed to build app!")
-        emergency.print_exception()
+        console.print("Failed to build app!")
+        console.print_exception()
         raise typer.Exit(2) from e
 
     try:
         server = Server(app, config)
         server.run()
     except Exception as e:
-        emergency.print("Failed to run server!")
-        emergency.print_exception()
+        console.print("Failed to run server!")
+        console.print_exception()
         raise typer.Exit(3) from e
 
 

@@ -1,40 +1,25 @@
-from litestar.exceptions import HTTPException
-from litestar.status_codes import HTTP_409_CONFLICT, HTTP_502_BAD_GATEWAY
-
 from emistream.models.data import Event
 
 
-class AlreadyReservedError(HTTPException):
-    """The stream is already reserved."""
+class ServiceError(Exception):
+    """Base class for service errors."""
 
-    detail: str = "The stream is already reserved."
-    status_code: int = HTTP_409_CONFLICT
-
-    def __init__(
-        self,
-        event: Event,
-        headers: dict[str, str] | None = None,
-    ) -> None:
-        super().__init__(
-            detail=self.detail,
-            status_code=self.status_code,
-            headers=headers,
-            extra={"event": event.dict()},
-        )
+    pass
 
 
-class RecorderUnavailableError(HTTPException):
-    """The recorder service is unavailable."""
+class RecorderError(ServiceError):
+    """Raised when a recorder service error occurs."""
 
-    detail: str = "The recorder service is unavailable."
-    status_code: int = HTTP_502_BAD_GATEWAY
+    pass
 
-    def __init__(
-        self,
-        headers: dict[str, str] | None = None,
-    ) -> None:
-        super().__init__(
-            detail=self.detail,
-            status_code=self.status_code,
-            headers=headers,
-        )
+
+class StreamBusyError(ServiceError):
+    """Raised when a stream is busy."""
+
+    def __init__(self, event: Event) -> None:
+        self._event = event
+        super().__init__("Stream is busy.")
+
+    @property
+    def event(self) -> Event:
+        return self._event

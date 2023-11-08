@@ -39,6 +39,7 @@
         python = pkgs.python311;
         nil = pkgs.nil;
         task = pkgs.go-task;
+        coreutils = pkgs.coreutils;
         trunk = pkgs.trunk-io;
         poetry = pkgs.poetry;
         cacert = pkgs.cacert;
@@ -46,7 +47,6 @@
         ffmpeg = pkgs.ffmpeg;
         tini = pkgs.tini;
         su-exec = pkgs.su-exec;
-        curlie = pkgs.curlie;
       in {
         # Override pkgs argument
         _module.args.pkgs = import inputs.nixpkgs {
@@ -74,17 +74,20 @@
               python
               nil
               task
+              coreutils
               trunk
               poetry
               cacert
               copier
               ffmpeg
-              curlie
             ];
+
+            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
 
             shellHook = ''
               task install
-              source .venv/bin/activate
+              . .venv/bin/activate
+              export PYTHONPATH="''${VIRTUAL_ENV:?}/''${PYTHON_SITE_PACKAGES:?}:''${PYTHONPATH:-}"
             '';
           };
 
@@ -94,13 +97,17 @@
             packages = [
               python
               task
+              coreutils
               poetry
               cacert
             ];
 
+            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
+
             shellHook = ''
               task install
-              source .venv/bin/activate
+              . .venv/bin/activate
+              export PYTHONPATH="''${VIRTUAL_ENV:?}/''${PYTHON_SITE_PACKAGES:?}:''${PYTHONPATH:-}"
             '';
           };
 
@@ -115,6 +122,8 @@
               tini
               su-exec
             ];
+
+            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
           };
 
           template = pkgs.mkShell {
@@ -122,6 +131,7 @@
 
             packages = [
               task
+              coreutils
               copier
             ];
           };
@@ -132,6 +142,7 @@
             packages = [
               node
               task
+              coreutils
               trunk
             ];
           };
@@ -142,14 +153,18 @@
             packages = [
               python
               task
+              coreutils
               poetry
               cacert
               ffmpeg
             ];
 
+            PYTHON_SITE_PACKAGES = "${python.sitePackages}";
+
             shellHook = ''
               task install
-              source .venv/bin/activate
+              . .venv/bin/activate
+              export PYTHONPATH="''${VIRTUAL_ENV:?}/''${PYTHON_SITE_PACKAGES:?}:''${PYTHONPATH:-}"
             '';
           };
 
@@ -159,6 +174,7 @@
             packages = [
               node
               task
+              coreutils
             ];
           };
         };

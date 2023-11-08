@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig
 
 from emistream.config.models import EmirecorderConfig
-from emistream.emirecorder.models import RecordRequest, RecordResponse
+from emistream.emirecorder.models import PostRecordRequest, PostRecordResponse
 
 
 class EmirecorderEndpoint(BaseEndpoint):
@@ -53,6 +53,9 @@ class EmirecorderAPIBase(Gracy[EmirecorderEndpoint]):
 class EmirecorderAPI(EmirecorderAPIBase):
     """API for the emirecorder."""
 
-    async def record(self, request: RecordRequest) -> RecordResponse:
-        response = await self.post(EmirecorderEndpoint.RECORD, json=request.dict())
-        return RecordResponse.parse_raw(response.content)
+    async def record(self, request: PostRecordRequest) -> PostRecordResponse:
+        response = await self.post(
+            EmirecorderEndpoint.RECORD,
+            json=request.model_dump(mode="json", by_alias=True),
+        )
+        return PostRecordResponse.model_validate_json(response.content)

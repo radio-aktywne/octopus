@@ -1,40 +1,27 @@
-from abc import ABC
 from datetime import datetime
-from typing import Generic, Literal, TypeVar
+from typing import Annotated, Literal, TypeVar
 
-from pydantic import Field
+from pydantic import Field, RootModel
 
-from emistream.models.base import SerializableGenericModel, SerializableModel
+from emistream.models.base import SerializableModel
 from emistream.models.data import Availability
 from emistream.time import utcnow
 
-T = TypeVar("T")
-D = TypeVar("D", bound=SerializableModel)
+TypeType = TypeVar("TypeType")
+DataType = TypeVar("DataType", bound=SerializableModel)
 
-
-class Event(SerializableGenericModel, Generic[T, D], ABC):
-    """Base class for events."""
-
-    type: T
-    created_at: datetime
-    data: D
-
-    class Config:
-        fields = {
-            "type": {
-                "title": "Type",
-                "description": "Type of the event.",
-            },
-            "created_at": {
-                "default_factory": utcnow,
-                "title": "CreatedAt",
-                "description": "Time at which the event was created.",
-            },
-            "data": {
-                "title": "Data",
-                "description": "Data of the event.",
-            },
-        }
+TypeFieldType = Annotated[
+    TypeType,
+    Field(description="Type of the event."),
+]
+CreatedAtFieldType = Annotated[
+    datetime,
+    Field(default_factory=utcnow, description="Time at which the event was created."),
+]
+DataFieldType = Annotated[
+    DataType,
+    Field(description="Data of the event."),
+]
 
 
 class DummyEventData(SerializableModel):
@@ -43,11 +30,21 @@ class DummyEventData(SerializableModel):
     pass
 
 
-class DummyEvent(Event[Literal["dummy"], DummyEventData]):
+class DummyEvent(SerializableModel):
     """Dummy event that exists only so that there can be two types in discriminated union."""
 
-    type: Literal["dummy"] = "dummy"
-    data: DummyEventData = DummyEventData()
+    type: TypeFieldType[Literal["dummy"]] = Field(
+        "dummy",
+        title="DummyEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="DummyEvent.CreatedAt",
+    )
+    data: DataFieldType[DummyEventData] = Field(
+        DummyEventData(),
+        title="DummyEvent.Data",
+    )
 
 
 class AvailabilityChangedEventData(SerializableModel):
@@ -55,20 +52,35 @@ class AvailabilityChangedEventData(SerializableModel):
 
     availability: Availability = Field(
         ...,
-        title="Availability",
+        title="AvailabilityChangedEventData.Availability",
         description="New availability.",
     )
 
 
-class AvailabilityChangedEvent(
-    Event[Literal["availability-changed"], AvailabilityChangedEventData]
-):
+class AvailabilityChangedEvent(SerializableModel):
     """Event that indicates a change in availability."""
 
-    type: Literal["availability-changed"] = "availability-changed"
+    type: TypeFieldType[Literal["availability-changed"]] = Field(
+        "availability-changed",
+        title="AvailabilityChangedEvent.Type",
+    )
+    created_at: CreatedAtFieldType = Field(
+        ...,
+        title="AvailabilityChangedEvent.CreatedAt",
+    )
+    data: DataFieldType[AvailabilityChangedEventData] = Field(
+        ...,
+        title="AvailabilityChangedEvent.Data",
+    )
 
 
-class ParsableEvent(SerializableModel):
+Event = DummyEvent | AvailabilityChangedEvent
+
+
+class ParsableEvent(RootModel):
     """Event that can be parsed from a serialized form."""
 
-    __root__: DummyEvent | AvailabilityChangedEvent = Field(discriminator="type")
+    root: Event = Field(
+        ...,
+        discriminator="type",
+    )

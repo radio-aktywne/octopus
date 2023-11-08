@@ -7,26 +7,25 @@ authors = ["radio-aktywne <it@radioaktywne.pl>"]
 [tool.poetry.dependencies]
 python = "^3.11"
 # Pydantic is used to define data models
-pydantic = { version = "^1.10", extras = ["dotenv"] }
+pydantic = "^2.4"
+pydantic-settings = "^2.0"
 # OmegaConf is used to load configuration
 omegaconf = "^2.3"
 # Typer and Rich are used to build CLIs
 typer = { version = "^0.9", extras = ["all"] }
-rich = "^13.4"
+rich = "^13.6"
 # Litestar and Uvicorn are used to build async APIs
-litestar = "^2.0.0b1"
-uvicorn = { version = "^0.22", extras = ["standard"] }
-# pyhumps is used to convert between different case styles
-pyhumps = "^3.8"
-# Streaming utilities
-pystreams = { git = "https://github.com/radio-aktywne/package-pystreams.git", tag = "0.3.2" }
+litestar = "^2.3"
+uvicorn = { version = "^0.24", extras = ["standard"] }
 # For correct handling of timezones
 tzdata = "*"
+# Streaming utilities
+pystreams = { git = "https://github.com/radio-aktywne/package-pystreams.git", tag = "0.3.4" }
 # Helps building API clients
 gracy = "^1.27"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7"
+pytest = "^7.4"
 pytest-asyncio = "^0.21"
 
 [tool.pytest.ini_options]

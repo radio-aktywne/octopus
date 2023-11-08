@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from emistream.models import SerializableModel
+from emistream.models.base import SerializableModel
 from emistream.models.data import Reservation, ReservationRequest
 
 

@@ -1,6 +1,6 @@
 from pydantic import Field
 
-from emistream.models import SerializableModel
+from emistream.models.base import SerializableModel
 from emistream.models.data import Availability
 
 
@@ -9,5 +9,6 @@ class GetResponse(SerializableModel):
 
     availability: Availability = Field(
         ...,
+        title="GetResponse.Availability",
         description="Availability information.",
     )

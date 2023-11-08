@@ -5,15 +5,12 @@ from uuid import uuid4
 from litestar.channels import ChannelsPlugin
 from pystreams.stream import Stream
 
-from emistream.config import Config
+from emistream.config.models import Config
+from emistream.emirecorder import models as rm
 from emistream.emirecorder.client import EmirecorderAPI
 from emistream.emirecorder.errors import EmirecorderError
-from emistream.emirecorder.models import RecordingCredentials, RecordRequest
-from emistream.models.data import Availability, Event, Reservation, ReservationRequest
-from emistream.models.events import (
-    AvailabilityChangedEvent,
-    AvailabilityChangedEventData,
-)
+from emistream.models import data as dm
+from emistream.models import events as em
 from emistream.stream.errors import RecorderError, StreamBusyError
 from emistream.stream.runner import StreamRunner
 from emistream.stream.state import RawStreamState, StreamState
@@ -37,10 +34,10 @@ class StreamController:
         self._channels = channels
         self._config = config
 
-    def _create_availability(self, event: Event | None) -> Availability:
+    def _create_availability(self, event: dm.Event | None) -> dm.Availability:
         """Create an availability object."""
 
-        return Availability(
+        return dm.Availability(
             event=event,
             checked_at=utcnow(),
         )
@@ -55,24 +52,43 @@ class StreamController:
 
         return utcnow() + timedelta(seconds=self._config.stream.timeout)
 
-    def _create_reservation(self) -> Reservation:
+    def _create_reservation(self) -> dm.Reservation:
         """Create a reservation object."""
 
-        return Reservation(
+        return dm.Reservation(
             token=self._generate_token(),
             expires_at=self._get_token_expiry(),
         )
 
+    def _build_record_request(
+        self, request: dm.ReservationRequest
+    ) -> rm.PostRecordRequest:
+        """Build a record request."""
+
+        return rm.PostRecordRequest(
+            request=rm.RecordingRequest(
+                event=rm.Event(
+                    show=rm.Show(
+                        label=request.event.show.label,
+                        metadata=request.event.show.metadata,
+                    ),
+                    start=request.event.start,
+                    end=request.event.end,
+                    metadata=request.event.metadata,
+                ),
+            )
+        )
+
     async def _get_recording_credentials(
         self,
-        request: ReservationRequest,
-    ) -> RecordingCredentials | None:
+        request: dm.ReservationRequest,
+    ) -> rm.RecordingCredentials | None:
         """Get recording credentials for the stream."""
 
         if not request.record:
             return None
 
-        request = RecordRequest.parse_obj({"request": {"event": request.event.dict()}})
+        request = self._build_record_request(request)
 
         try:
             response = await self._emirecorder.record(request)
@@ -81,25 +97,25 @@ class StreamController:
 
         return response.credentials
 
-    async def _emit_availability_change(self, availability: Availability) -> None:
+    async def _emit_availability_change(self, availability: dm.Availability) -> None:
         """Emit an availability change event."""
 
-        event = AvailabilityChangedEvent(
-            data=AvailabilityChangedEventData(
+        event = em.AvailabilityChangedEvent(
+            data=em.AvailabilityChangedEventData(
                 availability=availability,
             ),
         )
-        data = event.json()
+        data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
 
-    async def _set_state(self, state: RawStreamState, event: Event | None) -> None:
+    async def _set_state(self, state: RawStreamState, event: dm.Event | None) -> None:
         """Set the state of the stream."""
 
         availability = self._create_availability(event)
         state.set(event)
         await self._emit_availability_change(availability)
 
-    async def _set_reserved(self, state: RawStreamState, event: Event) -> None:
+    async def _set_reserved(self, state: RawStreamState, event: dm.Event) -> None:
         """Set the state of the stream to reserved."""
 
         await self._set_state(state, event)
@@ -123,13 +139,13 @@ class StreamController:
 
         create_task(self._watch_stream_task(stream))
 
-    async def availability(self) -> Availability:
+    async def availability(self) -> dm.Availability:
         """Get the availability of the stream."""
 
         event = await self._state.get()
         return self._create_availability(event)
 
-    async def reserve(self, request: ReservationRequest) -> Reservation:
+    async def reserve(self, request: dm.ReservationRequest) -> dm.Reservation:
         """Reserve the stream."""
 
         async with self._state.lock() as state:

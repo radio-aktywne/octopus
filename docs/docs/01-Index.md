@@ -3,7 +3,7 @@ slug: /
 title: Index
 ---
 
-# emistream
+# emistream app
 
 Emission streaming logic 🔴
 
