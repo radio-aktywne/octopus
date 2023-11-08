@@ -1,6 +1,6 @@
 from litestar.datastructures import State as LitestarState
 
-from emistream.config import Config
+from emistream.config.models import Config
 from emistream.stream.state import StreamState
 
 

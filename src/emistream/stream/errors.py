@@ -7,7 +7,14 @@ class StreamError(Exception):
     pass
 
 
-class StreamBusyError(StreamError, RuntimeError):
+class RecorderError(StreamError):
+    """Raised when a recorder service error occurs."""
+
+    def __init__(self) -> None:
+        super().__init__("Recorder service error.")
+
+
+class StreamBusyError(StreamError):
     """Raised when a stream is busy."""
 
     def __init__(self, event: Event) -> None:
@@ -17,10 +24,3 @@ class StreamBusyError(StreamError, RuntimeError):
     @property
     def event(self) -> Event:
         return self._event
-
-
-class RecorderError(StreamError, RuntimeError):
-    """Raised when a recorder service error occurs."""
-
-    def __init__(self) -> None:
-        super().__init__("Recorder service error.")

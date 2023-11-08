@@ -1,7 +1,7 @@
 import uvicorn
 from litestar import Litestar
 
-from emistream.config import Config
+from emistream.config.models import Config
 
 
 class Server:
@@ -25,7 +25,4 @@ class Server:
             self._app,
             host=config.host,
             port=config.port,
-            limit_concurrency=config.concurrency,
-            backlog=config.backlog,
-            timeout_keep_alive=config.keepalive,
         )

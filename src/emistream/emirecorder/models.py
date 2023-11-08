@@ -14,7 +14,8 @@ class Show(SerializableModel):
         description="Label of the show.",
     )
     metadata: dict[str, str] = Field(
-        {},
+        ...,
+        default_factory=dict,
         title="Show.Metadata",
         description="Metadata of the show.",
     )
@@ -39,7 +40,8 @@ class Event(SerializableModel):
         description="End time of the event.",
     )
     metadata: dict[str, str] = Field(
-        {},
+        ...,
+        default_factory=dict,
         title="Event.Metadata",
         description="Metadata of the event.",
     )
@@ -70,21 +72,21 @@ class RecordingCredentials(SerializableModel):
     )
 
 
-class RecordRequest(SerializableModel):
-    """Request for record endpoint."""
+class PostRecordRequest(SerializableModel):
+    """Request for POST method of record endpoint."""
 
     request: RecordingRequest = Field(
         ...,
-        title="Request",
+        title="PostRecordRequest.Request",
         description="Request for a recording.",
     )
 
 
-class RecordResponse(SerializableModel):
-    """Response from record endpoint."""
+class PostRecordResponse(SerializableModel):
+    """Response from POST method of record endpoint."""
 
     credentials: RecordingCredentials = Field(
         ...,
-        title="Credentials",
+        title="PostRecordResponse.Credentials",
         description="Credentials for the recording.",
     )

@@ -29,7 +29,7 @@ class DependenciesBuilder:
             ),
         )
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> dict[str, Provide]:
         return {
             "service": Provide(self._build_service),
         }

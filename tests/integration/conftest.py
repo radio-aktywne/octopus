@@ -1,8 +1,8 @@
 import pytest
 from litestar.testing import AsyncTestClient
 
-from emistream.api import AppBuilder
-from emistream.config import ConfigBuilder
+from emistream.api.app import AppBuilder
+from emistream.config.builder import ConfigBuilder
 
 
 @pytest.fixture(scope="session")

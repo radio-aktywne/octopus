@@ -14,7 +14,8 @@ class Show(SerializableModel):
         description="Label of the show.",
     )
     metadata: dict[str, str] = Field(
-        {},
+        ...,
+        default_factory=dict,
         title="Show.Metadata",
         description="Metadata of the show.",
     )
@@ -39,7 +40,8 @@ class Event(SerializableModel):
         description="End time of the event.",
     )
     metadata: dict[str, str] = Field(
-        {},
+        ...,
+        default_factory=dict,
         title="Event.Metadata",
         description="Metadata of the event.",
     )

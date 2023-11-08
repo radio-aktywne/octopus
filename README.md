@@ -1,4 +1,4 @@
-<h1 align="center">emistream</h1>
+<h1 align="center">emistream app</h1>
 
 <div align="center">
 

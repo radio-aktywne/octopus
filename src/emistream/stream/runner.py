@@ -6,7 +6,7 @@ from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetad
 from pystreams.srt import SRTNode
 from pystreams.stream import Stream
 
-from emistream.config import Config
+from emistream.config.models import Config
 from emistream.emirecorder.models import RecordingCredentials
 from emistream.models.data import Event, Reservation, ReservationRequest
 from emistream.time import utcnow

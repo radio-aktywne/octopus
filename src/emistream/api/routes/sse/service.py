@@ -16,5 +16,5 @@ class Service:
 
         async with self._channels.start_subscription("events") as subscriber:
             async for event in subscriber.iter_events():
-                event = ParsableEvent.parse_raw(event)
-                yield event.__root__
+                event = ParsableEvent.model_validate_json(event)
+                yield event.root

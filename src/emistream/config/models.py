@@ -1,6 +1,4 @@
-from typing import Any
-
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from emistream.config.base import BaseConfig
 
@@ -20,30 +18,6 @@ class ServerConfig(BaseModel):
         title="Port",
         description="Port to run the server on.",
     )
-    concurrency: int | None = Field(
-        None,
-        ge=1,
-        title="Concurrency",
-        description="Number of concurrent requests to handle.",
-    )
-    backlog: int = Field(
-        2048,
-        ge=0,
-        title="Backlog",
-        description="Number of requests to queue.",
-    )
-    keepalive: int = Field(
-        5,
-        ge=0,
-        title="Keepalive",
-        description="Number of seconds to keep connections alive.",
-    )
-
-    @validator("concurrency", pre=True)
-    def _validate_concurrency(cls, value: Any) -> Any:
-        if value == "":
-            return None
-        return value
 
 
 class StreamConfig(BaseModel):

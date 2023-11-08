@@ -15,7 +15,7 @@ class DependenciesBuilder:
     async def _build_service(self, channels: ChannelsPlugin) -> Service:
         return Service(channels)
 
-    def build(self) -> dict[str, object]:
+    def build(self) -> dict[str, Provide]:
         return {
             "service": Provide(self._build_service),
         }
@@ -33,6 +33,6 @@ class Controller(BaseController):
     async def get(self, service: Service) -> ServerSentEvent:
         async def _yield_events() -> AsyncGenerator[str, None]:
             async for event in service.subscribe():
-                yield event.json()
+                yield event.model_dump_json(by_alias=True)
 
         return ServerSentEvent(_yield_events())
