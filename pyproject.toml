@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "emistream"
-version = "0.7.0"
+version = "0.8.0"
 description = "Emission streaming logic 🔴"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
