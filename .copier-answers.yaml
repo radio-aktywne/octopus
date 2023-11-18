@@ -1,6 +1,5 @@
----
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 0.5.1
+_commit: 0.6.0
 _src_path: gh:radio-aktywne/template-app-litestar
 accountname: radio-aktywne
 appname: emistream
@@ -12,6 +11,7 @@ envprefix: EMISTREAM
 events: true
 imagename: apps/emistream
 importname: emistream
+port: 10000
 registry: true
 releases: true
 reponame: app-emistream

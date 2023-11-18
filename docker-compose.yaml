@@ -1,7 +1,8 @@
----
 services:
   emistream:
-    build: .
+    build:
+      context: ./
+      network: host
     network_mode: host
     environment:
       - "EMISTREAM__SERVER__HOST=${EMISTREAM__SERVER__HOST:-0.0.0.0}"

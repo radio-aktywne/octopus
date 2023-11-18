@@ -1,4 +1,3 @@
----
 name: Test
 
 # Put 'on' in quotes to avoid YAML parsing error
@@ -11,30 +10,30 @@ name: Test
       - main
     # Run only on changes to relevant files
     paths:
-      - ".github/workflows/test.yaml"
-      - "src/**"
-      - "tests/**"
-      - "flake.lock"
+      - .github/workflows/test.yaml
+      - src/**
+      - tests/**
+      - flake.lock
       - "*.nix"
-      - "poetry.lock"
-      - "poetry.toml"
-      - "pyproject.toml"
-      - "Taskfile.dist.yaml"
+      - poetry.lock
+      - poetry.toml
+      - pyproject.toml
+      - Taskfile.dist.yaml
   # Run also on pull requests to main branch
   pull_request:
     branches:
       - main
     # Run only on changes to relevant files
     paths:
-      - ".github/workflows/test.yaml"
-      - "src/**"
-      - "tests/**"
-      - "flake.lock"
+      - .github/workflows/test.yaml
+      - src/**
+      - tests/**
+      - flake.lock
       - "*.nix"
-      - "poetry.lock"
-      - "poetry.toml"
-      - "pyproject.toml"
-      - "Taskfile.dist.yaml"
+      - poetry.lock
+      - poetry.toml
+      - pyproject.toml
+      - Taskfile.dist.yaml
 
 jobs:
   test:
@@ -44,14 +43,14 @@ jobs:
     # Use reasonable timeout to avoid stuck workflows
     timeout-minutes: 30
     env:
-      NIX_CACHE_DIR: /home/runner/.nixcache
-      POETRY_CACHE_DIR: /home/runner/.poetrycache
+      NIX_CACHE_DIR: /home/runner/.nixcache/
+      POETRY_CACHE_DIR: /home/runner/.poetrycache/
     permissions:
       # Needed to checkout code
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.1.0
+        uses: actions/checkout@v4.1.1
       - name: Setup Nix cache
         uses: actions/cache@v3.3.2
         id: cache-nix
@@ -64,10 +63,10 @@ jobs:
           path: ${{ env.POETRY_CACHE_DIR }}
           key: test-poetry
       - name: Install Nix
-        uses: cachix/install-nix-action@v22
+        uses: cachix/install-nix-action@v23
         with:
           github_access_token: ${{ github.token }}
-          install_url: https://releases.nixos.org/nix/nix-2.18.0/install
+          install_url: https://releases.nixos.org/nix/nix-2.18.1/install
       # See: https://github.com/cachix/install-nix-action/issues/56
       - name: Import Nix store cache
         if: steps.cache-nix.outputs.cache-hit == 'true'
@@ -81,7 +80,7 @@ jobs:
         run: >
           nix
           develop
-          .#test
+          ./#test
           --command
           --
           task
@@ -95,5 +94,5 @@ jobs:
           ${{ env.NIX_CACHE_DIR }}
           &&
           nix-store
-          --export $(find /nix/store -maxdepth 1 -name '*-*')
+          --export $(find /nix/store/ -maxdepth 1 -name '*-*')
           > ${{ env.NIX_CACHE_DIR }}/archive.nar
