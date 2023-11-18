@@ -34,7 +34,7 @@ ignore = [
 
 src = [
   # Allow imports relative to src directory, where the source code lives.
-  "src",
+  "src/",
   # Allow imports relative to root directory to be able to import from tests.
-  ".",
+  "./",
 ]

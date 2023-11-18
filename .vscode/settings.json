@@ -1,22 +1,4 @@
 {
-  // Exclude Trunk generated files
-  "files.exclude": {
-    "**/.trunk/*actions/": true,
-    "**/.trunk/*logs/": true,
-    "**/.trunk/*notifications/": true,
-    "**/.trunk/*out/": true,
-    "**/.trunk/*plugins/": true,
-    "**/.trunk/*tools/": true
-  },
-  // Exclude Trunk generated files
-  "files.watcherExclude": {
-    "**/.trunk/*actions/": true,
-    "**/.trunk/*logs/": true,
-    "**/.trunk/*notifications/": true,
-    "**/.trunk/*out/": true,
-    "**/.trunk/*plugins/": true,
-    "**/.trunk/*tools/": true
-  },
   // Set default Python interpreter to the one in the virtual environment
   "python.defaultInterpreterPath": "${workspaceFolder}/.venv",
   // Don't activate the virtual environment by VS Code

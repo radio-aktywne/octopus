@@ -11,15 +11,15 @@ WORKDIR /env/
 COPY flake.lock *.nix ./
 
 # Copy env script
-COPY ./scripts/env.sh ./scripts/env.sh
+COPY scripts/env.sh scripts/env.sh
 
 # Build runtime shell closure and activation script
 RUN \
     # Mount cached store paths
-    --mount=type=cache,target=/nix-store-cache \
+    --mount=type=cache,target=/nix-store-cache/ \
     # Mount Nix evaluation cache
-    --mount=type=cache,target=/root/.cache/nix \
-    ./scripts/env.sh runtime ./build /nix-store-cache
+    --mount=type=cache,target=/root/.cache/nix/ \
+    ./scripts/env.sh runtime build/ /nix-store-cache/
 
 # Ubuntu is probably the safest choice for a runtime container right now
 FROM ubuntu:23.10
@@ -39,10 +39,10 @@ RUN useradd --create-home app
 
 # Create virtual environment
 # hadolint ignore=SC1091
-RUN . /env/activate && python -m venv .venv
+RUN . /env/activate && python -m venv .venv/
 
 # Setup entrypoint for RUN commands
-COPY ./scripts/shell.sh ./scripts/shell.sh
+COPY scripts/shell.sh scripts/shell.sh
 SHELL ["./scripts/shell.sh"]
 
 # Copy Poetry files
@@ -52,20 +52,20 @@ COPY poetry.lock poetry.toml pyproject.toml ./
 # hadolint ignore=SC2239
 RUN \
     # Mount Poetry cache
-    --mount=type=cache,target=/root/.cache/pypoetry \
+    --mount=type=cache,target=/root/.cache/pypoetry/ \
     poetry install --no-interaction --no-root --only main
 
 # Copy source
-COPY ./src/ ./src/
+COPY src/ src/
 
 # Build wheel and install with pip to force non-editable install
 # See: https://github.com/python-poetry/poetry/issues/1382
 # hadolint ignore=SC2239
 RUN poetry build --no-interaction --format wheel && \
     python -m pip install --no-deps --no-index --no-cache-dir dist/*.whl && \
-    rm -rf dist ./*.egg-info
+    rm -rf dist/ ./*.egg-info
 
 # Setup main entrypoint
-COPY ./scripts/entrypoint.sh ./scripts/entrypoint.sh
+COPY scripts/entrypoint.sh scripts/entrypoint.sh
 ENTRYPOINT ["./scripts/entrypoint.sh", "emistream"]
 CMD []
