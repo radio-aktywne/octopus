@@ -1,5 +1,5 @@
 from emistream.api.routes.reserve import errors as re
-from emistream.models.data import Reservation, ReservationRequest
+from emistream.api.routes.reserve.models import ReserveRequest, ReserveResponse
 from emistream.stream import errors as se
 from emistream.stream.controller import StreamController
 
@@ -10,7 +10,7 @@ class Service:
     def __init__(self, controller: StreamController) -> None:
         self._controller = controller
 
-    async def reserve(self, request: ReservationRequest) -> Reservation:
+    async def reserve(self, request: ReserveRequest) -> ReserveResponse:
         """Reserve a stream."""
 
         try:

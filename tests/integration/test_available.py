@@ -13,14 +13,11 @@ async def test_get(client: AsyncTestClient) -> None:
     assert response.status_code == HTTP_200_OK
 
     data = response.json()
-    assert "availability" in data
+    assert "event" in data
+    assert "checkedAt" in data
 
-    availability = data["availability"]
-    assert "event" in availability
-    assert "checkedAt" in availability
-
-    event = availability["event"]
+    event = data["event"]
     assert event is None
 
-    checked_at = availability["checkedAt"]
+    checked_at = data["checkedAt"]
     assert datetime.fromisoformat(checked_at)

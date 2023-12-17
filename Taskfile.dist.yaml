@@ -226,7 +226,7 @@ tasks:
         &&
         poetry
         version
-        {{ .CLI_ARGS | default "patch" }}
+        {{ .CLI_ARGS | default "minor" }}
   test:
     desc: Run tests
     cmds:

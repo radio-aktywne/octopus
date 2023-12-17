@@ -1,4 +1,4 @@
-from emistream.models.data import Availability
+from emistream.api.routes.available.models import GetResponse
 from emistream.stream.controller import StreamController
 
 
@@ -8,7 +8,7 @@ class Service:
     def __init__(self, controller: StreamController) -> None:
         self._controller = controller
 
-    async def availability(self) -> Availability:
+    async def get(self) -> GetResponse:
         """Get availability information."""
 
         return await self._controller.availability()

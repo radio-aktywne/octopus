@@ -35,6 +35,10 @@ ignore = [
 src = [
   # Allow imports relative to src directory, where the source code lives.
   "src/",
-  # Allow imports relative to root directory to be able to import from tests.
-  "./",
+]
+
+[lint.isort]
+known-first-party = [
+  # Treat tests as a first-party module.
+  "tests",
 ]
