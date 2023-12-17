@@ -74,13 +74,7 @@ class AvailabilityChangedEvent(SerializableModel):
     )
 
 
-Event = DummyEvent | AvailabilityChangedEvent
-
-
-class ParsableEvent(RootModel):
-    """Event that can be parsed from a serialized form."""
-
-    root: Event = Field(
-        ...,
-        discriminator="type",
-    )
+Event = Annotated[
+    DummyEvent | AvailabilityChangedEvent, Field(..., discriminator="type")
+]
+ParsableEvent = RootModel[Event]

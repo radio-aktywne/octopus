@@ -1,5 +1,5 @@
 from litestar import Controller as BaseController
-from litestar import Response, get
+from litestar import get
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 
@@ -42,9 +42,7 @@ class Controller(BaseController):
 
     @get(
         summary="Get availability information",
-        description="Get information about the current availability of the stream",
+        description="Get information about the current availability of the stream.",
     )
-    async def get(self, service: Service) -> Response[GetResponse]:
-        availability = await service.availability()
-        content = GetResponse(availability=availability)
-        return Response(content)
+    async def get(self, service: Service) -> GetResponse:
+        return await service.get()

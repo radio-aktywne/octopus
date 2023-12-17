@@ -1,11 +1,11 @@
 from litestar import Controller as BaseController
-from litestar import Response, post
+from litestar import post
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 
 from emistream.api.exceptions import ConflictException
 from emistream.api.routes.reserve.errors import StreamBusyError
-from emistream.api.routes.reserve.models import PostRequest, PostResponse
+from emistream.api.routes.reserve.models import ReserveRequest, ReserveResponse
 from emistream.api.routes.reserve.service import Service
 from emistream.emirecorder.client import EmirecorderAPI
 from emistream.state import State
@@ -44,15 +44,12 @@ class Controller(BaseController):
 
     @post(
         summary="Reserve a stream",
-        description="Reserve a stream to be able to go live",
+        description="Reserve a stream to be able to go live.",
         raises=[ConflictException],
     )
-    async def post(self, data: PostRequest, service: Service) -> Response[PostResponse]:
+    async def reserve(self, data: ReserveRequest, service: Service) -> ReserveResponse:
         try:
-            reservation = await service.reserve(data.request)
+            return await service.reserve(data.request)
         except StreamBusyError as e:
             extra = {"event": e.event.model_dump(mode="json", by_alias=True)}
             raise ConflictException(extra=extra) from e
-
-        content = PostResponse(reservation=reservation)
-        return Response(content)
