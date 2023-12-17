@@ -31,14 +31,12 @@ curl \
     -X POST \
     -H "Content-Type: application/json" \
     -d '{
-      "request": {
-        "event": {
-          "show": {"label": "My Show"},
-          "start": "2021-01-01T00:00:00Z",
-          "end": "2021-01-01T01:00:00Z"
-        },
-        "record": true
-      }
+      "event": {
+        "show": {"label": "My Show"},
+        "start": "2021-01-01T00:00:00Z",
+        "end": "2021-01-01T01:00:00Z"
+      },
+      "record": true
     }' \
     http://localhost:10000/reserve
 ```

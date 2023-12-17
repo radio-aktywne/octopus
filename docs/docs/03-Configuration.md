@@ -13,15 +13,6 @@ You can configure the app at runtime using various environment variables:
 - `EMISTREAM__SERVER__PORT` -
   port to run the app on
   (default: `10000`)
-- `EMISTREAM__SERVER__CONCURRENCY` -
-  number of concurrent requests to handle
-  (default: empty, which means no limit)
-- `EMISTREAM__SERVER__BACKLOG` -
-  number of requests to queue
-  (default: `2048`)
-- `EMISTREAM__SERVER__KEEPALIVE` -
-  number of seconds to keep connections alive
-  (default: `5`)
 - `EMISTREAM__STREAM__TIMEOUT` -
   number of seconds to wait for a connection
   (default: `60`)
