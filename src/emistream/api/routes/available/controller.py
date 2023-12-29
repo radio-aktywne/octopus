@@ -2,6 +2,7 @@ from litestar import Controller as BaseController
 from litestar import get
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
+from litestar.response import Response
 
 from emistream.api.routes.available.models import GetResponse
 from emistream.api.routes.available.service import Service
@@ -44,5 +45,6 @@ class Controller(BaseController):
         summary="Get availability information",
         description="Get information about the current availability of the stream.",
     )
-    async def get(self, service: Service) -> GetResponse:
-        return await service.get()
+    async def get(self, service: Service) -> Response[GetResponse]:
+        response = await service.get()
+        return Response(response)
