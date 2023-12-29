@@ -2,6 +2,7 @@ from litestar import Controller as BaseController
 from litestar import get
 from litestar.datastructures import CacheControlHeader
 from litestar.di import Provide
+from litestar.response import Response
 from litestar.status_codes import HTTP_204_NO_CONTENT
 
 from emistream.api.routes.ping.models import PingResponse
@@ -31,5 +32,6 @@ class Controller(BaseController):
         cache_control=CacheControlHeader(no_store=True),
         status_code=HTTP_204_NO_CONTENT,
     )
-    async def ping(self, service: Service) -> PingResponse:
-        return await service.ping()
+    async def ping(self, service: Service) -> Response[PingResponse]:
+        response = await service.ping()
+        return Response(response)

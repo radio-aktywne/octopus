@@ -2,6 +2,7 @@ from litestar import Controller as BaseController
 from litestar import post
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
+from litestar.response import Response
 
 from emistream.api.exceptions import ConflictException
 from emistream.api.routes.reserve.errors import StreamBusyError
@@ -47,9 +48,13 @@ class Controller(BaseController):
         description="Reserve a stream to be able to go live.",
         raises=[ConflictException],
     )
-    async def reserve(self, data: ReserveRequest, service: Service) -> ReserveResponse:
+    async def reserve(
+        self, data: ReserveRequest, service: Service
+    ) -> Response[ReserveResponse]:
         try:
-            return await service.reserve(data.request)
+            response = await service.reserve(data.request)
         except StreamBusyError as e:
             extra = {"event": e.event.model_dump(mode="json", by_alias=True)}
             raise ConflictException(extra=extra) from e
+
+        return Response(response)
