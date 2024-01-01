@@ -1,4 +1,4 @@
-from emistream.models.data import Reservation, ReservationRequest
+from emistream.streaming import models as sm
 
-ReserveRequest = ReservationRequest
-ReserveResponse = Reservation
+ReserveRequest = sm.ReserveRequest
+ReserveResponse = sm.ReserveResponse

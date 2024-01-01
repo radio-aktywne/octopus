@@ -1,9 +1,9 @@
 from litestar import Router
 
-from emistream.api.routes.available.controller import Controller
+from emistream.api.routes.check.controller import Controller
 
 router = Router(
-    path="/available",
+    path="/check",
     route_handlers=[
         Controller,
     ],

@@ -4,12 +4,10 @@ from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.response import Response
 
-from emistream.api.routes.available.models import GetResponse
-from emistream.api.routes.available.service import Service
-from emistream.emirecorder.client import EmirecorderAPI
+from emistream.api.routes.check.models import CheckResponse
+from emistream.api.routes.check.service import Service
 from emistream.state import State
-from emistream.stream.controller import StreamController
-from emistream.stream.runner import StreamRunner
+from emistream.streaming.controller import StreamController
 
 
 class DependenciesBuilder:
@@ -22,11 +20,12 @@ class DependenciesBuilder:
     ) -> Service:
         return Service(
             controller=StreamController(
-                state=state.stream,
-                runner=StreamRunner(state.config),
-                emirecorder=EmirecorderAPI(state.config.emirecorder),
-                channels=channels,
                 config=state.config,
+                store=state.store,
+                lock=state.lock,
+                emishows=state.emishows,
+                emirecorder=state.emirecorder,
+                channels=channels,
             ),
         )
 
@@ -37,14 +36,14 @@ class DependenciesBuilder:
 
 
 class Controller(BaseController):
-    """Controller for the available endpoint."""
+    """Controller for the check endpoint."""
 
     dependencies = DependenciesBuilder().build()
 
     @get(
-        summary="Get availability information",
-        description="Get information about the current availability of the stream.",
+        summary="Check availability",
+        description="Check the current availability of the stream.",
     )
-    async def get(self, service: Service) -> Response[GetResponse]:
-        response = await service.get()
+    async def check(self, service: Service) -> Response[CheckResponse]:
+        response = await service.check()
         return Response(response)

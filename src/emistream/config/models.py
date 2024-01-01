@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from pydantic import BaseModel, Field
 
 from emistream.config.base import BaseConfig
@@ -23,16 +25,28 @@ class ServerConfig(BaseModel):
 class StreamConfig(BaseModel):
     """Configuration for the streaming process."""
 
-    timeout: int = Field(
-        60,
+    host: str = Field(
+        "0.0.0.0",
+        title="Host",
+        description="Host to listen on for connections.",
+    )
+    port: int = Field(
+        10000,
+        ge=0,
+        le=65535,
+        title="Port",
+        description="Port to listen on for connections.",
+    )
+    timeout: timedelta = Field(
+        timedelta(minutes=1),
         ge=0,
         title="Timeout",
-        description="Number of seconds to wait for a connection.",
+        description="Time after which a stream will be stopped if no connections are made.",
     )
-    format: str = Field(
-        "ogg",
-        title="Format",
-        description="Format to stream in.",
+    window: timedelta = Field(
+        timedelta(hours=1),
+        title="Window",
+        description="Time window to search for event instances around the current time.",
     )
 
 
@@ -70,6 +84,23 @@ class EmirecorderConfig(BaseModel):
     )
 
 
+class EmishowsConfig(BaseModel):
+    """Configuration for the Emishows service."""
+
+    host: str = Field(
+        "localhost",
+        title="Host",
+        description="Host to connect to.",
+    )
+    port: int = Field(
+        35000,
+        ge=0,
+        le=65535,
+        title="Port",
+        description="Port to connect to.",
+    )
+
+
 class Config(BaseConfig):
     """Configuration for the application."""
 
@@ -92,4 +123,9 @@ class Config(BaseConfig):
         EmirecorderConfig(),
         title="Emirecorder",
         description="Configuration for the Emirecorder service.",
+    )
+    emishows: EmishowsConfig = Field(
+        EmishowsConfig(),
+        title="Emishows",
+        description="Configuration for the Emishows service.",
     )

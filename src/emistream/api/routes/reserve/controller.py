@@ -4,14 +4,16 @@ from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.response import Response
 
-from emistream.api.exceptions import ConflictException
-from emistream.api.routes.reserve.errors import StreamBusyError
+from emistream.api.exceptions import ConflictException, UnprocessableContentException
+from emistream.api.routes.reserve.errors import (
+    InstanceNotFoundError,
+    RecorderBusyError,
+    StreamBusyError,
+)
 from emistream.api.routes.reserve.models import ReserveRequest, ReserveResponse
 from emistream.api.routes.reserve.service import Service
-from emistream.emirecorder.client import EmirecorderAPI
 from emistream.state import State
-from emistream.stream.controller import StreamController
-from emistream.stream.runner import StreamRunner
+from emistream.streaming.controller import StreamController
 
 
 class DependenciesBuilder:
@@ -24,11 +26,12 @@ class DependenciesBuilder:
     ) -> Service:
         return Service(
             controller=StreamController(
-                state=state.stream,
-                runner=StreamRunner(state.config),
-                emirecorder=EmirecorderAPI(state.config.emirecorder),
-                channels=channels,
                 config=state.config,
+                store=state.store,
+                lock=state.lock,
+                emishows=state.emishows,
+                emirecorder=state.emirecorder,
+                channels=channels,
             ),
         )
 
@@ -46,15 +49,18 @@ class Controller(BaseController):
     @post(
         summary="Reserve a stream",
         description="Reserve a stream to be able to go live.",
-        raises=[ConflictException],
+        raises=[ConflictException, UnprocessableContentException],
     )
     async def reserve(
         self, data: ReserveRequest, service: Service
     ) -> Response[ReserveResponse]:
         try:
-            response = await service.reserve(data.request)
-        except StreamBusyError as e:
-            extra = {"event": e.event.model_dump(mode="json", by_alias=True)}
-            raise ConflictException(extra=extra) from e
+            response = await service.reserve(data)
+        except InstanceNotFoundError as error:
+            raise UnprocessableContentException(extra=error.message) from error
+        except StreamBusyError as error:
+            raise ConflictException(extra=error.message) from error
+        except RecorderBusyError as error:
+            raise ConflictException(extra=error.message) from error
 
         return Response(response)
