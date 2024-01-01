@@ -10,21 +10,3 @@ class ServiceError(Exception):
     @property
     def message(self) -> str | None:
         return self._message
-
-
-class InstanceNotFoundError(ServiceError):
-    """Raised when no near instances of an event are found."""
-
-    pass
-
-
-class StreamBusyError(ServiceError):
-    """Raised when a stream is busy."""
-
-    pass
-
-
-class RecorderBusyError(ServiceError):
-    """Raised when a recorder is busy."""
-
-    pass

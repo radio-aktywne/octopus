@@ -1,92 +1,53 @@
-from datetime import datetime
+from typing import Literal
+from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, NaiveDatetime
 
 from emistream.models.base import SerializableModel
 
-
-class Show(SerializableModel):
-    """Show information."""
-
-    label: str = Field(
-        ...,
-        title="Show.Label",
-        description="Label of the show.",
-    )
-    metadata: dict[str, str] = Field(
-        ...,
-        default_factory=dict,
-        title="Show.Metadata",
-        description="Metadata of the show.",
-    )
+Format = Literal["ogg"]
 
 
-class Event(SerializableModel):
-    """Event information."""
+class RecordPostRequest(SerializableModel):
+    """Request for POST method of record endpoint."""
 
-    show: Show = Field(
+    event: UUID = Field(
         ...,
-        title="Event.Show",
-        description="Show this event is for.",
+        title="PostRecordRequest.Event",
+        description="Identifier of the event to record.",
     )
-    start: datetime | None = Field(
-        ...,
-        title="Event.Start",
-        description="Start time of the event.",
-    )
-    end: datetime | None = Field(
-        ...,
-        title="Event.End",
-        description="End time of the event.",
-    )
-    metadata: dict[str, str] = Field(
-        ...,
-        default_factory=dict,
-        title="Event.Metadata",
-        description="Metadata of the event.",
+    format: Format = Field(
+        "ogg",
+        title="PostRecordRequest.Format",
+        description="Format of the recording.",
     )
 
 
-class RecordingRequest(SerializableModel):
-    """Request for a recording."""
-
-    event: Event = Field(
-        ...,
-        title="RecordingRequest.Event",
-        description="Event to reserve.",
-    )
-
-
-class RecordingCredentials(SerializableModel):
-    """Credentials for a recording."""
+class Credentials(SerializableModel):
+    """Credentials for a recording stream."""
 
     token: str = Field(
         ...,
-        title="RecordingCredentials.Token",
+        title="Credentials.Token",
         description="Token to use to connect to the stream.",
     )
-    expires_at: datetime = Field(
+    expires_at: NaiveDatetime = Field(
         ...,
-        title="RecordingCredentials.ExpiresAt",
-        description="Time at which the token expires if not used.",
+        title="Credentials.ExpiresAt",
+        description="Time in UTC at which the token expires if not used.",
     )
 
 
-class PostRecordRequest(SerializableModel):
-    """Request for POST method of record endpoint."""
-
-    request: RecordingRequest = Field(
-        ...,
-        title="PostRecordRequest.Request",
-        description="Request for a recording.",
-    )
-
-
-class PostRecordResponse(SerializableModel):
+class RecordPostResponse(SerializableModel):
     """Response from POST method of record endpoint."""
 
-    credentials: RecordingCredentials = Field(
+    credentials: Credentials = Field(
         ...,
         title="PostRecordResponse.Credentials",
-        description="Credentials for the recording.",
+        description="Credentials to use to connect to the stream.",
+    )
+    port: int = Field(
+        ...,
+        title="PostRecordResponse.Port",
+        description="Port to use to connect to the stream.",
     )

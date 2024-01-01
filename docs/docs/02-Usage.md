@@ -6,14 +6,14 @@ title: Usage
 ## Checking availability
 
 You can check if something is currently being streamed
-by sending a `GET` request to the `/available` endpoint.
+by sending a `GET` request to the `/check` endpoint.
 The response will contain the information about the event
 associated with the stream, if any.
 
 For example, you can use [`curl`](https://curl.se) to do that:
 
 ```sh
-curl http://localhost:10000/available
+curl http://localhost:10000/check
 ```
 
 ## Reserving the stream
@@ -31,19 +31,15 @@ curl \
     -X POST \
     -H "Content-Type: application/json" \
     -d '{
-      "event": {
-        "show": {"label": "My Show"},
-        "start": "2021-01-01T00:00:00Z",
-        "end": "2021-01-01T01:00:00Z"
-      },
+      "event": "747c31a8-74d2-497f-ba89-cdd85b243e5d",
       "record": true
     }' \
     http://localhost:10000/reserve
 ```
 
-You should receive a response containing the token
+You should receive a response containing the credentials and port number
 that you can use to connect to the stream and start sending audio.
-The token is only valid for a limited time.
+The credentials are only valid for a limited time.
 
 ## Sending audio
 
@@ -52,13 +48,13 @@ You can send audio to record using the
 protocol.
 
 As the audio codec and container,
-you should use [`Opus`](https://opus-codec.org) and
+by default you should use [`Opus`](https://opus-codec.org) and
 [`Ogg`](https://www.xiph.org/ogg) respectively.
 They are free and open source, focused on quality and efficiency,
 and support embedding metadata into the stream.
 
-Remember to pass the token you received in the previous step
-to authenticate with the stream.
+Remember to use the token and port you received in the previous step
+to connect to the stream.
 
 For example, you can use [`Liquidsoap`](https://www.liquidsoap.info) for that:
 

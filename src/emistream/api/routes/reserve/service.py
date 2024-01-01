@@ -1,7 +1,7 @@
-from emistream.api.routes.reserve import errors as re
+from emistream.api.routes.reserve import errors as e
 from emistream.api.routes.reserve.models import ReserveRequest, ReserveResponse
-from emistream.stream import errors as se
-from emistream.stream.controller import StreamController
+from emistream.streaming import errors as se
+from emistream.streaming.controller import StreamController
 
 
 class Service:
@@ -15,9 +15,11 @@ class Service:
 
         try:
             return await self._controller.reserve(request)
-        except se.RecorderError as e:
-            raise re.RecorderError(e.event) from e
-        except se.StreamBusyError as e:
-            raise re.StreamBusyError(e.event) from e
-        except se.StreamError as e:
-            raise re.ServiceError() from e
+        except se.InstanceNotFoundError as error:
+            raise e.InstanceNotFoundError(error.message) from error
+        except se.StreamBusyError as error:
+            raise e.StreamBusyError(error.message) from error
+        except se.RecorderBusyError as error:
+            raise e.RecorderBusyError(error.message) from error
+        except se.StreamingError as error:
+            raise e.ServiceError(error.message) from error

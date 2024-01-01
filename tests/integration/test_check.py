@@ -7,9 +7,9 @@ from litestar.testing import AsyncTestClient
 
 @pytest.mark.asyncio(scope="session")
 async def test_get(client: AsyncTestClient) -> None:
-    """Test if GET /available returns correct response."""
+    """Test if GET /check returns correct response."""
 
-    response = await client.get("/available")
+    response = await client.get("/check")
 
     assert response.status_code == HTTP_200_OK
 

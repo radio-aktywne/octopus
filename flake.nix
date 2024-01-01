@@ -45,6 +45,7 @@
         cacert = pkgs.cacert;
         copier = pkgs.copier;
         ffmpeg = pkgs.ffmpeg;
+        usql = pkgs.usql;
         tini = pkgs.tini;
         su-exec = pkgs.su-exec;
       in {
@@ -80,6 +81,7 @@
               cacert
               copier
               ffmpeg
+              usql
             ];
 
             PYTHON_SITE_PACKAGES = "${python.sitePackages}";
@@ -171,6 +173,7 @@
               poetry
               cacert
               ffmpeg
+              usql
             ];
 
             PYTHON_SITE_PACKAGES = "${python.sitePackages}";

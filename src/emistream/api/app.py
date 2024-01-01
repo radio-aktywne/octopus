@@ -1,6 +1,8 @@
+import logging
 from collections.abc import AsyncGenerator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from importlib import metadata
+from uuid import UUID
 
 from litestar import Litestar, Router
 from litestar.channels import ChannelsPlugin
@@ -11,8 +13,13 @@ from litestar.plugins import PluginProtocol
 
 from emistream.api.routes.router import router
 from emistream.config.models import Config
+from emistream.emirecorder.service import EmirecorderService
+from emistream.emishows.service import EmishowsService
+from emistream.locks.asyncio import AsyncioLock
+from emistream.locks.base import Lock
 from emistream.state import State
-from emistream.stream.state import StreamState
+from emistream.stores.base import Store
+from emistream.stores.memory import MemoryStore
 
 
 class AppBuilder:
@@ -52,26 +59,47 @@ class AppBuilder:
             self._build_pydantic_plugin(),
         ]
 
+    def _build_emishows(self) -> EmishowsService:
+        return EmishowsService(self._config.emishows)
+
+    def _build_emirecorder(self) -> EmirecorderService:
+        return EmirecorderService(self._config.emirecorder)
+
+    def _build_store(self) -> Store[UUID | None]:
+        return MemoryStore(None)
+
+    def _build_lock(self) -> Lock:
+        return AsyncioLock()
+
     def _build_initial_state(self) -> State:
         return State(
             {
                 "config": self._config,
-                "stream": StreamState(),
+                "emishows": self._build_emishows(),
+                "emirecorder": self._build_emirecorder(),
+                "store": self._build_store(),
+                "lock": self._build_lock(),
             }
         )
 
     @asynccontextmanager
-    async def _stream_state_lifespan(self, app: Litestar) -> AsyncGenerator[None, None]:
-        state: State = app.state
+    async def _suppress_httpx_logging_lifespan(
+        self, app: Litestar
+    ) -> AsyncGenerator[None, None]:
+        logger = logging.getLogger("httpx")
+        disabled = logger.disabled
+        logger.disabled = True
 
-        async with state.stream:
+        try:
             yield
+        finally:
+            logger.disabled = disabled
 
     def _build_lifespan(
         self,
     ) -> list[Callable[[Litestar], AbstractAsyncContextManager]]:
         return [
-            self._stream_state_lifespan,
+            self._suppress_httpx_logging_lifespan,
         ]
 
     def build(self) -> Litestar:
