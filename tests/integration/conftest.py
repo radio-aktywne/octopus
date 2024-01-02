@@ -81,7 +81,7 @@ async def emiarchive() -> AsyncGenerator[AsyncDockerContainer, None]:
             response.raise_for_status()
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/apps/emiarchive:latest",
+        "ghcr.io/radio-aktywne/databases/emiarchive:latest",
         network="host",
     )
 
@@ -126,7 +126,7 @@ async def emishows_database() -> AsyncGenerator[AsyncDockerContainer, None]:
     """Emishows database container."""
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/apps/emishows-db:latest",
+        "ghcr.io/radio-aktywne/databases/emishows-db:latest",
         network="host",
         privileged=True,
     )
@@ -159,7 +159,7 @@ async def emitimes() -> AsyncGenerator[AsyncDockerContainer, None]:
             response.raise_for_status()
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/apps/emitimes:latest",
+        "ghcr.io/radio-aktywne/databases/emitimes:latest",
         network="host",
     )
 
