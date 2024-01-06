@@ -1,12 +1,12 @@
 from uuid import UUID
 
 from litestar.datastructures import State as LitestarState
+from pylocks.base import Lock
+from pystores.base import Store
 
 from emistream.config.models import Config
 from emistream.emirecorder.service import EmirecorderService
 from emistream.emishows.service import EmishowsService
-from emistream.locks.base import Lock
-from emistream.stores.base import Store
 
 
 class State(LitestarState):

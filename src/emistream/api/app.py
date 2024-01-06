@@ -10,16 +10,16 @@ from litestar.channels.backends.memory import MemoryChannelsBackend
 from litestar.contrib.pydantic import PydanticPlugin
 from litestar.openapi import OpenAPIConfig
 from litestar.plugins import PluginProtocol
+from pylocks.asyncio import AsyncioLock
+from pylocks.base import Lock
+from pystores.base import Store
+from pystores.memory import MemoryStore
 
 from emistream.api.routes.router import router
 from emistream.config.models import Config
 from emistream.emirecorder.service import EmirecorderService
 from emistream.emishows.service import EmishowsService
-from emistream.locks.asyncio import AsyncioLock
-from emistream.locks.base import Lock
 from emistream.state import State
-from emistream.stores.base import Store
-from emistream.stores.memory import MemoryStore
 
 
 class AppBuilder:
