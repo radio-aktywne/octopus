@@ -815,6 +815,36 @@ plugins = ["importlib-metadata"]
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "pylocks"
+version = "0.1.0"
+description = "Locking utilities for Python 🐍"
+optional = false
+python-versions = "^3.12"
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/radio-aktywne/package-pylocks.git"
+reference = "0.1.0"
+resolved_reference = "3dd446ba315fc7153338c060b5f72ffaa80e4c78"
+
+[[package]]
+name = "pystores"
+version = "0.1.0"
+description = "Storage utilities for Python 🐍"
+optional = false
+python-versions = "^3.12"
+files = []
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/radio-aktywne/package-pystores.git"
+reference = "0.1.0"
+resolved_reference = "418849454caa097da4fed11244efbb87e8e3fa22"
+
+[[package]]
 name = "pystreams"
 version = "0.5.0"
 description = "Streaming utilities for Python 🐍"
@@ -1482,4 +1512,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "ef9308c053ee45d7f6e6250c2420278ed575b0eedd3f13d7b6f98763e17993f0"
+content-hash = "52780b4ab483c6e32087b9fc9070d6fd9e7d45970c6b4b5726f03c4e5dfbc1c6"
