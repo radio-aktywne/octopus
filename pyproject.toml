@@ -26,7 +26,7 @@ pylocks = { git = "https://github.com/radio-aktywne/package-pylocks.git", tag = 
 # Storage utilities
 pystores = { git = "https://github.com/radio-aktywne/package-pystores.git", tag = "0.3.0" }
 # Helps building API clients
-gracy = "^1.32"
+gracy = "^1.33"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1"
