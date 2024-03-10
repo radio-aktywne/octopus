@@ -5,7 +5,7 @@ from pydantic import Field, RootModel
 
 from emistream.models.base import SerializableModel
 from emistream.models.data import Availability
-from emistream.time import utcnow
+from emistream.time import naiveutcnow
 
 TypeType = TypeVar("TypeType")
 DataType = TypeVar("DataType", bound=SerializableModel)
@@ -16,7 +16,9 @@ TypeFieldType = Annotated[
 ]
 CreatedAtFieldType = Annotated[
     datetime,
-    Field(default_factory=utcnow, description="Time at which the event was created."),
+    Field(
+        default_factory=naiveutcnow, description="Time at which the event was created."
+    ),
 ]
 DataFieldType = Annotated[
     DataType,

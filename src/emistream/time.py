@@ -1,18 +1,18 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from zoneinfo import ZoneInfo
-
-
-def utczone() -> ZoneInfo:
-    """Return the UTC time zone."""
-
-    return ZoneInfo("Etc/UTC")
+from pydantic import AwareDatetime, NaiveDatetime
 
 
-def utcnow() -> datetime:
-    """Return the current datetime in UTC."""
+def awareutcnow() -> AwareDatetime:
+    """Return the current datetime in UTC with timezone information."""
 
-    return datetime.now(utczone())
+    return datetime.now(timezone.utc)
+
+
+def naiveutcnow() -> NaiveDatetime:
+    """Return the current datetime in UTC without timezone information."""
+
+    return awareutcnow().replace(tzinfo=None)
 
 
 def stringify(dt: datetime) -> str:
