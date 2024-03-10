@@ -1,6 +1,6 @@
 import asyncio
 import secrets
-from datetime import timedelta
+from datetime import timedelta, timezone
 from http import HTTPStatus
 from uuid import UUID
 
@@ -26,7 +26,7 @@ from emistream.streaming.errors import (
     StreamBusyError,
 )
 from emistream.streaming.runner import StreamRunner
-from emistream.time import utcnow, utczone
+from emistream.time import naiveutcnow
 
 
 class StreamController:
@@ -53,13 +53,13 @@ class StreamController:
 
         return dm.Availability(
             event=event,
-            checked_at=utcnow().replace(tzinfo=None),
+            checked_at=naiveutcnow(),
         )
 
     def _get_reference_time(self) -> NaiveDatetime:
         """Returns a reference time for finding the nearest event instance."""
 
-        return utcnow().replace(tzinfo=None)
+        return naiveutcnow()
 
     def _get_time_window(
         self, reference: NaiveDatetime
@@ -101,9 +101,9 @@ class StreamController:
         """Finds the nearest instance of an event."""
 
         def _compare(instance: esm.EventInstance) -> timedelta:
-            timezone = ZoneInfo(event.timezone)
-            start = instance.start.replace(tzinfo=timezone)
-            start = start.astimezone(utczone()).replace(tzinfo=None)
+            tz = ZoneInfo(event.timezone)
+            start = instance.start.replace(tzinfo=tz)
+            start = start.astimezone(timezone.utc).replace(tzinfo=None)
             return abs(start - reference)
 
         instance = min(instances, key=_compare, default=None)
@@ -121,7 +121,7 @@ class StreamController:
     def _get_token_expiry(self) -> NaiveDatetime:
         """Returns the expiry time for credentials."""
 
-        return utcnow().replace(tzinfo=None) + self._config.stream.timeout
+        return naiveutcnow() + self._config.stream.timeout
 
     def _generate_credentials(self) -> sm.Credentials:
         """Generates credentials for the stream."""

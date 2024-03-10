@@ -1,3 +1,5 @@
+from typing import TypeVar
+
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig, GracyNamespace
 from pydantic import TypeAdapter
 
@@ -12,6 +14,8 @@ from emistream.emishows.models import (
     ScheduleListStartParameter,
     ScheduleListWhereParameter,
 )
+
+T = TypeVar("T")
 
 
 class EmishowsEndpoint(BaseEndpoint):
@@ -44,7 +48,7 @@ class EmishowsServiceBase(Gracy[EmishowsEndpoint]):
 class EmishowsScheduleNamespace(GracyNamespace[EmishowsEndpoint]):
     """Namespace for emishows API schedule endpoint."""
 
-    def _dump_param[T](self, t: type[T], v: T) -> str:
+    def _dump_param(self, t: type[T], v: T) -> str:
         value = TypeAdapter(t).dump_json(v, by_alias=True).decode()
         if value.startswith('"') and value.endswith('"'):
             value = value[1:-1]

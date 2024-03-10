@@ -5,37 +5,37 @@ description = "Emission streaming logic 🔴"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = "^3.11"
 # Pydantic is used to define data models
-pydantic = "^2.5"
-pydantic-settings = "^2.1"
+pydantic = "^2.6"
+pydantic-settings = "^2.2"
 # OmegaConf is used to load configuration
 omegaconf = "^2.3"
 # Typer and Rich are used to build CLIs
 typer = { version = "^0.9", extras = ["all"] }
 rich = "^13.7"
 # Litestar and Uvicorn are used to build async APIs
-litestar = "^2.4"
-uvicorn = { version = "^0.25", extras = ["standard"] }
+litestar = "^2.6"
+uvicorn = { version = "^0.28", extras = ["standard"] }
 # For correct handling of timezones
 tzdata = "*"
 # Streaming utilities
-pystreams = { git = "https://github.com/radio-aktywne/package-pystreams.git", tag = "0.5.0" }
+pystreams = { git = "https://github.com/radio-aktywne/package-pystreams.git", tag = "0.6.0" }
 # Locking utilities
-pylocks = { git = "https://github.com/radio-aktywne/package-pylocks.git", tag = "0.1.0" }
+pylocks = { git = "https://github.com/radio-aktywne/package-pylocks.git", tag = "0.2.0" }
 # Storage utilities
-pystores = { git = "https://github.com/radio-aktywne/package-pystores.git", tag = "0.1.0" }
+pystores = { git = "https://github.com/radio-aktywne/package-pystores.git", tag = "0.3.0" }
 # Helps building API clients
 gracy = "^1.32"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^7.4"
+pytest = "^8.1"
 # Asyncio support for pytest
 pytest-asyncio = "^0.23"
 # Running dependent services in containers
-testcontainers = "^3.7"
+testcontainers = "^4.0"
 # Async HTTP requests
-httpx = "^0.26"
+httpx = "^0.27"
 
 [tool.poetry.scripts]
 # Register CLI

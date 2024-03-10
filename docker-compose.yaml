@@ -3,7 +3,6 @@ services:
     build:
       context: ./
       network: host
-    network_mode: host
     environment:
       - "EMISTREAM__SERVER__HOST=${EMISTREAM__SERVER__HOST:-0.0.0.0}"
       - "EMISTREAM__SERVER__PORT=${EMISTREAM__SERVER__PORT:-10000}"
@@ -17,3 +16,4 @@ services:
       - "EMISTREAM__EMIRECORDER__PORT=${EMISTREAM__EMIRECORDER__PORT:-31000}"
       - "EMISTREAM__EMISHOWS__HOST=${EMISTREAM__EMISHOWS__HOST:-localhost}"
       - "EMISTREAM__EMISHOWS__PORT=${EMISTREAM__EMISHOWS__PORT:-35000}"
+    network_mode: host

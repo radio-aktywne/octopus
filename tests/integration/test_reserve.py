@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from litestar.status_codes import HTTP_201_CREATED
 from litestar.testing import AsyncTestClient
 
-from emistream.time import stringify, utcnow, utczone
+from emistream.time import naiveutcnow, stringify
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -43,9 +43,8 @@ async def event_manager(
     @asynccontextmanager
     async def _setup_event() -> AsyncGenerator[UUID, None]:
         async with show_manager as show:
-            start = utcnow().replace(tzinfo=None)
+            start = naiveutcnow()
             end = start + timedelta(hours=1)
-            timezone = utczone()
 
             response = await emishows_client.post(
                 "/events",
@@ -54,7 +53,7 @@ async def event_manager(
                     "showId": str(show),
                     "start": stringify(start),
                     "end": stringify(end),
-                    "timezone": str(timezone),
+                    "timezone": str(timezone.utc),
                 },
             )
             response.raise_for_status()

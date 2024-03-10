@@ -1,7 +1,8 @@
 from enum import StrEnum
-from typing import Annotated, Literal, TypedDict
+from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, NaiveDatetime
+from typing_extensions import TypedDict
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from emistream.models.base import SerializableModel

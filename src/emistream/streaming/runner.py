@@ -9,7 +9,7 @@ from pystreams.stream import Stream
 from emistream.config.models import Config
 from emistream.emishows import models as esm
 from emistream.streaming import models as sm
-from emistream.time import utcnow
+from emistream.time import naiveutcnow
 
 
 class StreamRunner:
@@ -21,7 +21,7 @@ class StreamRunner:
     def _build_input(self, credentials: sm.Credentials) -> FFmpegNode:
         """Build the input node."""
 
-        timeout = credentials.expires_at - utcnow().replace(tzinfo=None)
+        timeout = credentials.expires_at - naiveutcnow()
         timeout = ceil(timeout.total_seconds() * 1000000)
         timeout = max(timeout, 0)
 
