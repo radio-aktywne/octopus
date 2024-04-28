@@ -60,10 +60,10 @@ class AppBuilder:
         ]
 
     def _build_emishows(self) -> EmishowsService:
-        return EmishowsService(self._config.emishows)
+        return EmishowsService(self._config.emishows.http)
 
     def _build_emirecorder(self) -> EmirecorderService:
-        return EmirecorderService(self._config.emirecorder)
+        return EmirecorderService(self._config.emirecorder.http)
 
     def _build_store(self) -> Store[UUID | None]:
         return MemoryStore(None)

@@ -1,6 +1,6 @@
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig, GracyNamespace
 
-from emistream.config.models import EmirecorderConfig
+from emistream.config.models import EmirecorderHTTPConfig
 from emistream.emirecorder.models import RecordPostRequest, RecordPostResponse
 
 
@@ -13,9 +13,9 @@ class EmirecorderEndpoint(BaseEndpoint):
 class EmirecorderServiceBase(Gracy[EmirecorderEndpoint]):
     """Base class for emirecorder API service."""
 
-    def __init__(self, config: EmirecorderConfig, *args, **kwargs) -> None:
+    def __init__(self, config: EmirecorderHTTPConfig, *args, **kwargs) -> None:
         class Config:
-            BASE_URL = f"http://{config.host}:{config.port}"
+            BASE_URL = config.url
             SETTINGS = GracyConfig(
                 retry=GracefulRetry(
                     delay=1,
