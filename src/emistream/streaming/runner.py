@@ -57,8 +57,8 @@ class StreamRunner:
         """Build fusion output node."""
 
         return SRTNode(
-            host=gethostbyname(self._config.fusion.host),
-            port=self._config.fusion.port,
+            host=gethostbyname(self._config.fusion.srt.host),
+            port=self._config.fusion.srt.port,
             options={"acodec": "copy", "f": format, "metadata": metadata},
         )
 
@@ -66,8 +66,8 @@ class StreamRunner:
         """Build tee fusion output node."""
 
         return SRTNode(
-            host=gethostbyname(self._config.fusion.host),
-            port=self._config.fusion.port,
+            host=gethostbyname(self._config.fusion.srt.host),
+            port=self._config.fusion.srt.port,
             options={"f": format},
         )
 
@@ -79,8 +79,8 @@ class StreamRunner:
         """Build tee emirecorder output node."""
 
         return SRTNode(
-            host=gethostbyname(self._config.emirecorder.host),
-            port=recorder.port,
+            host=gethostbyname(self._config.emirecorder.srt.host),
+            port=self._config.emirecorder.srt.port,
             options={"f": format, "passphrase": recorder.token},
         )
 

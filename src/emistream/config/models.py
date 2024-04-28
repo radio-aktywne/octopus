@@ -15,7 +15,7 @@ class ServerConfig(BaseModel):
     )
     port: int = Field(
         10000,
-        ge=0,
+        ge=1,
         le=65535,
         title="Port",
         description="Port to run the server on.",
@@ -32,7 +32,7 @@ class StreamConfig(BaseModel):
     )
     port: int = Field(
         10000,
-        ge=0,
+        ge=1,
         le=65535,
         title="Port",
         description="Port to listen on for connections.",
@@ -50,54 +50,154 @@ class StreamConfig(BaseModel):
     )
 
 
-class FusionConfig(BaseModel):
-    """Configuration for the Fusion service."""
+class FusionSRTConfig(BaseModel):
+    """Configuration for the Fusion SRT stream."""
 
     host: str = Field(
         "localhost",
         title="Host",
-        description="Host to connect to.",
+        description="Host of the SRT stream.",
     )
     port: int = Field(
         9000,
-        ge=0,
+        ge=1,
         le=65535,
         title="Port",
-        description="Port to connect to.",
+        description="Port of the SRT stream.",
     )
+
+    @property
+    def url(self) -> str:
+        return f"srt://{self.host}:{self.port}"
+
+
+class FusionConfig(BaseModel):
+    """Configuration for the Fusion service."""
+
+    srt: FusionSRTConfig = Field(
+        FusionSRTConfig(),
+        title="SRT",
+        description="Configuration for the SRT stream.",
+    )
+
+
+class EmirecorderHTTPConfig(BaseModel):
+    """Configuration for the Emirecorder HTTP API."""
+
+    scheme: str = Field(
+        "http",
+        title="Scheme",
+        description="Scheme of the HTTP API.",
+    )
+    host: str = Field(
+        "localhost",
+        title="Host",
+        description="Host of the HTTP API.",
+    )
+    port: int | None = Field(
+        31000,
+        ge=1,
+        le=65535,
+        title="Port",
+        description="Port of the HTTP API.",
+    )
+    path: str | None = Field(
+        None,
+        title="Path",
+        description="Path of the HTTP API.",
+    )
+
+    @property
+    def url(self) -> str:
+        url = f"{self.scheme}://{self.host}"
+        if self.port:
+            url = f"{url}:{self.port}"
+        if self.path:
+            path = self.path if self.path.startswith("/") else f"/{self.path}"
+            url = f"{url}{path}"
+        return url
+
+
+class EmirecorderSRTConfig(BaseModel):
+    """Configuration for the Emirecorder SRT stream."""
+
+    host: str = Field(
+        "localhost",
+        title="Host",
+        description="Host of the SRT stream.",
+    )
+    port: int = Field(
+        31000,
+        ge=1,
+        le=65535,
+        title="Port",
+        description="Port of the SRT stream.",
+    )
+
+    @property
+    def url(self) -> str:
+        return f"srt://{self.host}:{self.port}"
 
 
 class EmirecorderConfig(BaseModel):
     """Configuration for the Emirecorder service."""
 
+    http: EmirecorderHTTPConfig = Field(
+        EmirecorderHTTPConfig(),
+        title="HTTP",
+        description="Configuration for the HTTP API.",
+    )
+    srt: EmirecorderSRTConfig = Field(
+        EmirecorderSRTConfig(),
+        title="SRT",
+        description="Configuration for the SRT stream.",
+    )
+
+
+class EmishowsHTTPConfig(BaseModel):
+    """Configuration for the Emishows HTTP API."""
+
+    scheme: str = Field(
+        "http",
+        title="Scheme",
+        description="Scheme of the HTTP API.",
+    )
     host: str = Field(
         "localhost",
         title="Host",
-        description="Host to connect to.",
+        description="Host of the HTTP API.",
     )
-    port: int = Field(
-        31000,
-        ge=0,
+    port: int | None = Field(
+        35000,
+        ge=1,
         le=65535,
         title="Port",
-        description="Port to connect to.",
+        description="Port of the HTTP API.",
     )
+    path: str | None = Field(
+        None,
+        title="Path",
+        description="Path of the HTTP API.",
+    )
+
+    @property
+    def url(self) -> str:
+        url = f"{self.scheme}://{self.host}"
+        if self.port:
+            url = f"{url}:{self.port}"
+        if self.path:
+            path = self.path if self.path.startswith("/") else f"/{self.path}"
+            url = f"{url}{path}"
+        return url
 
 
 class EmishowsConfig(BaseModel):
     """Configuration for the Emishows service."""
 
-    host: str = Field(
-        "localhost",
-        title="Host",
-        description="Host to connect to.",
-    )
-    port: int = Field(
-        35000,
-        ge=0,
-        le=65535,
-        title="Port",
-        description="Port to connect to.",
+    http: EmishowsHTTPConfig = Field(
+        EmishowsHTTPConfig(),
+        title="HTTP",
+        description="Configuration for the HTTP API.",
     )
 
 
