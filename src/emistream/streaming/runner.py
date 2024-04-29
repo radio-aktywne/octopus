@@ -18,7 +18,7 @@ class StreamRunner:
     def __init__(self, config: Config) -> None:
         self._config = config
 
-    def _build_input(self, credentials: sm.Credentials) -> FFmpegNode:
+    def _build_input(self, port: int, credentials: sm.Credentials) -> FFmpegNode:
         """Build the input node."""
 
         timeout = credentials.expires_at - naiveutcnow()
@@ -26,8 +26,8 @@ class StreamRunner:
         timeout = max(timeout, 0)
 
         return SRTNode(
-            host=self._config.stream.host,
-            port=self._config.stream.port,
+            host=self._config.server.host,
+            port=port,
             options={
                 "mode": "listener",
                 "listen_timeout": timeout,
@@ -110,6 +110,7 @@ class StreamRunner:
         self,
         event: esm.Event,
         instance: esm.EventInstance,
+        port: int,
         credentials: sm.Credentials,
         format: sm.Format,
         recorder: sm.RecorderAccess | None,
@@ -117,7 +118,7 @@ class StreamRunner:
         """Builds stream metadata."""
 
         return FFmpegStreamMetadata(
-            input=self._build_input(credentials),
+            input=self._build_input(port, credentials),
             output=self._build_output(event, instance, format, recorder),
         )
 
@@ -130,6 +131,7 @@ class StreamRunner:
         self,
         event: esm.Event,
         instance: esm.EventInstance,
+        port: int,
         credentials: sm.Credentials,
         format: sm.Format,
         recorder: sm.RecorderAccess | None,
@@ -137,6 +139,6 @@ class StreamRunner:
         """Run the stream."""
 
         metadata = self._build_stream_metadata(
-            event, instance, credentials, format, recorder
+            event, instance, port, credentials, format, recorder
         )
         return await self._run_stream(metadata)

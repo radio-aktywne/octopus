@@ -134,7 +134,7 @@ class StreamController:
     def _get_port(self) -> int:
         """Returns a port for the stream."""
 
-        return self._config.stream.port
+        return self._config.server.ports.srt
 
     async def _get_recorder_access(
         self, event: UUID, format: sm.Format
@@ -201,6 +201,7 @@ class StreamController:
         self,
         event: esm.Event,
         instance: esm.EventInstance,
+        port: int,
         credentials: sm.Credentials,
         format: sm.Format,
         recorder: sm.RecorderAccess | None,
@@ -211,6 +212,7 @@ class StreamController:
         stream = await runner.run(
             event=event,
             instance=instance,
+            port=port,
             credentials=credentials,
             format=format,
             recorder=recorder,
@@ -240,8 +242,8 @@ class StreamController:
         event_id = UUID(schedule.event.id)
         format = request.format
 
-        credentials = self._generate_credentials()
         port = self._get_port()
+        credentials = self._generate_credentials()
 
         recorder = (
             await self._get_recorder_access(event_id, format)
@@ -252,7 +254,9 @@ class StreamController:
         await self._reserve_event(event_id)
 
         try:
-            await self._run(schedule.event, instance, credentials, format, recorder)
+            await self._run(
+                schedule.event, instance, port, credentials, format, recorder
+            )
 
             return sm.ReserveResponse(credentials=credentials, port=port)
         except:

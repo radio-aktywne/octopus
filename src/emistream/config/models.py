@@ -5,6 +5,25 @@ from pydantic import BaseModel, Field
 from emistream.config.base import BaseConfig
 
 
+class ServerPortsConfig(BaseModel):
+    """Configuration for the server ports."""
+
+    http: int = Field(
+        10000,
+        ge=0,
+        le=65535,
+        title="HTTP",
+        description="Port of the HTTP server.",
+    )
+    srt: int = Field(
+        10000,
+        ge=0,
+        le=65535,
+        title="SRT",
+        description="Port of the SRT server.",
+    )
+
+
 class ServerConfig(BaseModel):
     """Configuration for the server."""
 
@@ -13,30 +32,16 @@ class ServerConfig(BaseModel):
         title="Host",
         description="Host to run the server on.",
     )
-    port: int = Field(
-        10000,
-        ge=1,
-        le=65535,
-        title="Port",
-        description="Port to run the server on.",
+    ports: ServerPortsConfig = Field(
+        ServerPortsConfig(),
+        title="Ports",
+        description="Configuration for the server ports.",
     )
 
 
 class StreamConfig(BaseModel):
     """Configuration for the streaming process."""
 
-    host: str = Field(
-        "0.0.0.0",
-        title="Host",
-        description="Host to listen on for connections.",
-    )
-    port: int = Field(
-        10000,
-        ge=1,
-        le=65535,
-        title="Port",
-        description="Port to listen on for connections.",
-    )
     timeout: timedelta = Field(
         timedelta(minutes=1),
         ge=0,
@@ -114,6 +119,7 @@ class EmirecorderHTTPConfig(BaseModel):
             url = f"{url}:{self.port}"
         if self.path:
             path = self.path if self.path.startswith("/") else f"/{self.path}"
+            path = path.rstrip("/")
             url = f"{url}{path}"
         return url
 
@@ -187,6 +193,7 @@ class EmishowsHTTPConfig(BaseModel):
             url = f"{url}:{self.port}"
         if self.path:
             path = self.path if self.path.startswith("/") else f"/{self.path}"
+            path = path.rstrip("/")
             url = f"{url}{path}"
         return url
 
