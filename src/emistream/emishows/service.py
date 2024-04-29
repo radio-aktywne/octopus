@@ -3,7 +3,7 @@ from typing import TypeVar
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig, GracyNamespace
 from pydantic import TypeAdapter
 
-from emistream.config.models import EmishowsHTTPConfig
+from emistream.config.models import EmishowsConfig
 from emistream.emishows.models import (
     ScheduleListEndParameter,
     ScheduleListIncludeParameter,
@@ -27,9 +27,9 @@ class EmishowsEndpoint(BaseEndpoint):
 class EmishowsServiceBase(Gracy[EmishowsEndpoint]):
     """Base class for emishows API service."""
 
-    def __init__(self, config: EmishowsHTTPConfig, *args, **kwargs) -> None:
+    def __init__(self, config: EmishowsConfig, *args, **kwargs) -> None:
         class Config:
-            BASE_URL = config.url
+            BASE_URL = config.http.url
             SETTINGS = GracyConfig(
                 retry=GracefulRetry(
                     delay=1,
