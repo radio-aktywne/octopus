@@ -10,14 +10,11 @@ You can configure the app at runtime using various environment variables:
 - `EMISTREAM__SERVER__HOST` -
   host to run the server on
   (default: `0.0.0.0`)
-- `EMISTREAM__SERVER__PORT` -
-  port to run the server on
+- `EMISTREAM__SERVER__PORTS__HTTP` -
+  port to listen on for HTTP requests
   (default: `10000`)
-- `EMISTREAM__STREAM__HOST` -
-  host to listen on for connections
-  (default: `0.0.0.0`)
-- `EMISTREAM__STREAM__PORT` -
-  port to listen on for connections
+- `EMISTREAM__SERVER__PORTS__SRT` -
+  port to listen on for SRT streams
   (default: `10000`)
 - `EMISTREAM__STREAM__TIMEOUT` -
   time after which a stream will be stopped if no connections are made
