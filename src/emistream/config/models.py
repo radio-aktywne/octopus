@@ -86,8 +86,8 @@ class FusionConfig(BaseModel):
     )
 
 
-class EmirecorderHTTPConfig(BaseModel):
-    """Configuration for the Emirecorder HTTP API."""
+class EmirecordsHTTPConfig(BaseModel):
+    """Configuration for the Emirecords HTTP API."""
 
     scheme: str = Field(
         "http",
@@ -124,8 +124,8 @@ class EmirecorderHTTPConfig(BaseModel):
         return url
 
 
-class EmirecorderSRTConfig(BaseModel):
-    """Configuration for the Emirecorder SRT stream."""
+class EmirecordsSRTConfig(BaseModel):
+    """Configuration for the Emirecords SRT stream."""
 
     host: str = Field(
         "localhost",
@@ -145,16 +145,16 @@ class EmirecorderSRTConfig(BaseModel):
         return f"srt://{self.host}:{self.port}"
 
 
-class EmirecorderConfig(BaseModel):
-    """Configuration for the Emirecorder service."""
+class EmirecordsConfig(BaseModel):
+    """Configuration for the Emirecords service."""
 
-    http: EmirecorderHTTPConfig = Field(
-        EmirecorderHTTPConfig(),
+    http: EmirecordsHTTPConfig = Field(
+        EmirecordsHTTPConfig(),
         title="HTTP",
         description="Configuration for the HTTP API.",
     )
-    srt: EmirecorderSRTConfig = Field(
-        EmirecorderSRTConfig(),
+    srt: EmirecordsSRTConfig = Field(
+        EmirecordsSRTConfig(),
         title="SRT",
         description="Configuration for the SRT stream.",
     )
@@ -226,10 +226,10 @@ class Config(BaseConfig):
         title="Fusion",
         description="Configuration for the Fusion service.",
     )
-    emirecorder: EmirecorderConfig = Field(
-        EmirecorderConfig(),
-        title="Emirecorder",
-        description="Configuration for the Emirecorder service.",
+    emirecords: EmirecordsConfig = Field(
+        EmirecordsConfig(),
+        title="Emirecords",
+        description="Configuration for the Emirecords service.",
     )
     emishows: EmishowsConfig = Field(
         EmishowsConfig(),

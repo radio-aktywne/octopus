@@ -1,3 +1,3 @@
 from gracy.exceptions import GracyException
 
-EmirecorderError = GracyException
+EmirecordsError = GracyException

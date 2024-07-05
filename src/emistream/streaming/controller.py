@@ -12,9 +12,9 @@ from pystreams.stream import Stream
 from zoneinfo import ZoneInfo
 
 from emistream.config.models import Config
-from emistream.emirecorder import models as erm
-from emistream.emirecorder.errors import EmirecorderError
-from emistream.emirecorder.service import EmirecorderService
+from emistream.emirecords import models as erm
+from emistream.emirecords.errors import EmirecordsError
+from emistream.emirecords.service import EmirecordsService
 from emistream.emishows import models as esm
 from emistream.emishows.service import EmishowsService
 from emistream.models import data as dm
@@ -38,14 +38,14 @@ class StreamController:
         store: Store[UUID | None],
         lock: Lock,
         emishows: EmishowsService,
-        emirecorder: EmirecorderService,
+        emirecords: EmirecordsService,
         channels: ChannelsPlugin,
     ) -> None:
         self._config = config
         self._store = store
         self._lock = lock
         self._emishows = emishows
-        self._emirecorder = emirecorder
+        self._emirecords = emirecords
         self._channels = channels
 
     def _create_availability(self, event: UUID | None) -> dm.Availability:
@@ -144,8 +144,8 @@ class StreamController:
         request = erm.RecordPostRequest(event=str(event), format=format)
 
         try:
-            response = await self._emirecorder.record.record(request)
-        except EmirecorderError as error:
+            response = await self._emirecords.record.record(request)
+        except EmirecordsError as error:
             if (
                 hasattr(error, "response")
                 and error.response.status_code == HTTPStatus.CONFLICT

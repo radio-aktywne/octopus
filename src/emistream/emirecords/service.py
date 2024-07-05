@@ -1,19 +1,19 @@
 from gracy import BaseEndpoint, GracefulRetry, Gracy, GracyConfig, GracyNamespace
 
-from emistream.config.models import EmirecorderConfig
-from emistream.emirecorder.models import RecordPostRequest, RecordPostResponse
+from emistream.config.models import EmirecordsConfig
+from emistream.emirecords.models import RecordPostRequest, RecordPostResponse
 
 
-class EmirecorderEndpoint(BaseEndpoint):
-    """Endpoints for the emirecorder API."""
+class EmirecordsEndpoint(BaseEndpoint):
+    """Endpoints for the emirecords API."""
 
     RECORD = "/record"
 
 
-class EmirecorderServiceBase(Gracy[EmirecorderEndpoint]):
-    """Base class for emirecorder API service."""
+class EmirecordsServiceBase(Gracy[EmirecordsEndpoint]):
+    """Base class for emirecords API service."""
 
-    def __init__(self, config: EmirecorderConfig, *args, **kwargs) -> None:
+    def __init__(self, config: EmirecordsConfig, *args, **kwargs) -> None:
         class Config:
             BASE_URL = config.http.url
             SETTINGS = GracyConfig(
@@ -31,18 +31,18 @@ class EmirecorderServiceBase(Gracy[EmirecorderEndpoint]):
         self._config = config
 
 
-class EmirecorderScheduleNamespace(GracyNamespace[EmirecorderEndpoint]):
-    """Namespace for emirecorder API record endpoint."""
+class EmirecordsScheduleNamespace(GracyNamespace[EmirecordsEndpoint]):
+    """Namespace for emirecords API record endpoint."""
 
     async def record(self, request: RecordPostRequest) -> RecordPostResponse:
         response = await self.post(
-            EmirecorderEndpoint.RECORD,
+            EmirecordsEndpoint.RECORD,
             json=request.model_dump(mode="json", by_alias=True),
         )
         return RecordPostResponse.model_validate_json(response.content)
 
 
-class EmirecorderService(EmirecorderServiceBase):
-    """Service for emirecorder API."""
+class EmirecordsService(EmirecordsServiceBase):
+    """Service for emirecords API."""
 
-    record: EmirecorderScheduleNamespace
+    record: EmirecordsScheduleNamespace

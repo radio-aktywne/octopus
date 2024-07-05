@@ -28,23 +28,23 @@ You can configure the app at runtime using various environment variables:
 - `EMISTREAM__FUSION__SRT__PORT` -
   port of the SRT stream of the fusion service
   (default: `9000`)
-- `EMISTREAM__EMIRECORDER__HTTP__SCHEME` -
-  scheme of the HTTP API of the emirecorder service
+- `EMISTREAM__EMIRECORDS__HTTP__SCHEME` -
+  scheme of the HTTP API of the emirecords service
   (default: `http`)
-- `EMISTREAM__EMIRECORDER__HTTP__HOST` -
-  host of the HTTP API of the emirecorder service
+- `EMISTREAM__EMIRECORDS__HTTP__HOST` -
+  host of the HTTP API of the emirecords service
   (default: `localhost`)
-- `EMISTREAM__EMIRECORDER__HTTP__PORT` -
-  port of the HTTP API of the emirecorder service
+- `EMISTREAM__EMIRECORDS__HTTP__PORT` -
+  port of the HTTP API of the emirecords service
   (default: `31000`)
-- `EMISTREAM__EMIRECORDER__HTTP__PATH` -
-  path of the HTTP API of the emirecorder service
+- `EMISTREAM__EMIRECORDS__HTTP__PATH` -
+  path of the HTTP API of the emirecords service
   (default: ``)
-- `EMISTREAM__EMIRECORDER__SRT__HOST` -
-  host of the SRT stream of the emirecorder service
+- `EMISTREAM__EMIRECORDS__SRT__HOST` -
+  host of the SRT stream of the emirecords service
   (default: `localhost`)
-- `EMISTREAM__EMIRECORDER__SRT__PORT` -
-  port of the SRT stream of the emirecorder service
+- `EMISTREAM__EMIRECORDS__SRT__PORT` -
+  port of the SRT stream of the emirecords service
   (default: `31000`)
 - `EMISTREAM__EMISHOWS__HTTP__SCHEME` -
   scheme of the HTTP API of the emishows service
