@@ -5,7 +5,7 @@ from pylocks.base import Lock
 from pystores.base import Store
 
 from emistream.config.models import Config
-from emistream.emirecorder.service import EmirecorderService
+from emistream.emirecords.service import EmirecordsService
 from emistream.emishows.service import EmishowsService
 
 
@@ -15,13 +15,13 @@ class State(LitestarState):
     Attributes:
         config: Configuration for the application.
         emishows: Service for emishows API.
-        emirecorder: Service for emirecorder API.
+        emirecords: Service for emirecords API.
         store: Store for the state of currently streamed event.
         lock: Lock for the store.
     """
 
     config: Config
     emishows: EmishowsService
-    emirecorder: EmirecorderService
+    emirecords: EmirecordsService
     store: Store[UUID | None]
     lock: Lock

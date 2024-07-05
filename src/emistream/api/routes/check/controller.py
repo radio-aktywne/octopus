@@ -24,7 +24,7 @@ class DependenciesBuilder:
                 store=state.store,
                 lock=state.lock,
                 emishows=state.emishows,
-                emirecorder=state.emirecorder,
+                emirecords=state.emirecords,
                 channels=channels,
             ),
         )

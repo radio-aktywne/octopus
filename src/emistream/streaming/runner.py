@@ -71,16 +71,16 @@ class StreamRunner:
             options={"f": format},
         )
 
-    def _build_tee_emirecorder_output(
+    def _build_tee_emirecords_output(
         self,
         format: sm.Format,
         recorder: sm.RecorderAccess | None,
     ) -> FFmpegNode:
-        """Build tee emirecorder output node."""
+        """Build tee emirecords output node."""
 
         return SRTNode(
-            host=gethostbyname(self._config.emirecorder.srt.host),
-            port=self._config.emirecorder.srt.port,
+            host=gethostbyname(self._config.emirecords.srt.host),
+            port=self._config.emirecords.srt.port,
             options={"f": format, "passphrase": recorder.token},
         )
 
@@ -101,7 +101,7 @@ class StreamRunner:
         return FFmpegTeeNode(
             nodes=[
                 self._build_tee_fusion_output(format),
-                self._build_tee_emirecorder_output(format, recorder),
+                self._build_tee_emirecords_output(format, recorder),
             ],
             options={"acodec": "copy", "map": 0, "metadata": metadata},
         )
