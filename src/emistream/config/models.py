@@ -55,8 +55,8 @@ class StreamConfig(BaseModel):
     )
 
 
-class FusionSRTConfig(BaseModel):
-    """Configuration for the Fusion SRT stream."""
+class EmifuseSRTConfig(BaseModel):
+    """Configuration for the emifuse SRT stream."""
 
     host: str = Field(
         "localhost",
@@ -76,18 +76,18 @@ class FusionSRTConfig(BaseModel):
         return f"srt://{self.host}:{self.port}"
 
 
-class FusionConfig(BaseModel):
-    """Configuration for the Fusion service."""
+class EmifuseConfig(BaseModel):
+    """Configuration for the emifuse service."""
 
-    srt: FusionSRTConfig = Field(
-        FusionSRTConfig(),
+    srt: EmifuseSRTConfig = Field(
+        EmifuseSRTConfig(),
         title="SRT",
         description="Configuration for the SRT stream.",
     )
 
 
 class EmirecordsHTTPConfig(BaseModel):
-    """Configuration for the Emirecords HTTP API."""
+    """Configuration for the emirecords HTTP API."""
 
     scheme: str = Field(
         "http",
@@ -125,7 +125,7 @@ class EmirecordsHTTPConfig(BaseModel):
 
 
 class EmirecordsSRTConfig(BaseModel):
-    """Configuration for the Emirecords SRT stream."""
+    """Configuration for the emirecords SRT stream."""
 
     host: str = Field(
         "localhost",
@@ -146,7 +146,7 @@ class EmirecordsSRTConfig(BaseModel):
 
 
 class EmirecordsConfig(BaseModel):
-    """Configuration for the Emirecords service."""
+    """Configuration for the emirecords service."""
 
     http: EmirecordsHTTPConfig = Field(
         EmirecordsHTTPConfig(),
@@ -161,7 +161,7 @@ class EmirecordsConfig(BaseModel):
 
 
 class EmishowsHTTPConfig(BaseModel):
-    """Configuration for the Emishows HTTP API."""
+    """Configuration for the emishows HTTP API."""
 
     scheme: str = Field(
         "http",
@@ -199,7 +199,7 @@ class EmishowsHTTPConfig(BaseModel):
 
 
 class EmishowsConfig(BaseModel):
-    """Configuration for the Emishows service."""
+    """Configuration for the emishows service."""
 
     http: EmishowsHTTPConfig = Field(
         EmishowsHTTPConfig(),
@@ -221,18 +221,18 @@ class Config(BaseConfig):
         title="Stream",
         description="Configuration for the streaming process.",
     )
-    fusion: FusionConfig = Field(
-        FusionConfig(),
-        title="Fusion",
-        description="Configuration for the Fusion service.",
+    emifuse: EmifuseConfig = Field(
+        EmifuseConfig(),
+        title="Emifuse",
+        description="Configuration for the emifuse service.",
     )
     emirecords: EmirecordsConfig = Field(
         EmirecordsConfig(),
         title="Emirecords",
-        description="Configuration for the Emirecords service.",
+        description="Configuration for the emirecords service.",
     )
     emishows: EmishowsConfig = Field(
         EmishowsConfig(),
         title="Emishows",
-        description="Configuration for the Emishows service.",
+        description="Configuration for the emishows service.",
     )

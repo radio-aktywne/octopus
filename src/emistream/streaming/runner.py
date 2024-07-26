@@ -51,23 +51,23 @@ class StreamRunner:
 
         return self._build_ffmpeg_metadata_options(metadata)
 
-    def _build_fusion_output(
+    def _build_emifuse_output(
         self, format: sm.Format, metadata: list[str]
     ) -> FFmpegNode:
-        """Build fusion output node."""
+        """Build emifuse output node."""
 
         return SRTNode(
-            host=gethostbyname(self._config.fusion.srt.host),
-            port=self._config.fusion.srt.port,
+            host=gethostbyname(self._config.emifuse.srt.host),
+            port=self._config.emifuse.srt.port,
             options={"acodec": "copy", "f": format, "metadata": metadata},
         )
 
-    def _build_tee_fusion_output(self, format: sm.Format) -> FFmpegNode:
-        """Build tee fusion output node."""
+    def _build_tee_emifuse_output(self, format: sm.Format) -> FFmpegNode:
+        """Build tee emifuse output node."""
 
         return SRTNode(
-            host=gethostbyname(self._config.fusion.srt.host),
-            port=self._config.fusion.srt.port,
+            host=gethostbyname(self._config.emifuse.srt.host),
+            port=self._config.emifuse.srt.port,
             options={"f": format},
         )
 
@@ -96,11 +96,11 @@ class StreamRunner:
         metadata = self._build_metadata(event, instance)
 
         if recorder is None:
-            return self._build_fusion_output(format, metadata)
+            return self._build_emifuse_output(format, metadata)
 
         return FFmpegTeeNode(
             nodes=[
-                self._build_tee_fusion_output(format),
+                self._build_tee_emifuse_output(format),
                 self._build_tee_emirecords_output(format, recorder),
             ],
             options={"acodec": "copy", "map": 0, "metadata": metadata},
