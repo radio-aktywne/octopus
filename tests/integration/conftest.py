@@ -56,13 +56,13 @@ async def streamcast() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def fusion(
+async def emifuse(
     streamcast: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncDockerContainer, None]:
-    """Fusion container."""
+    """Emifuse container."""
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/apps/fusion:latest",
+        "ghcr.io/radio-aktywne/apps/emifuse:latest",
         network="host",
     )
 
@@ -212,7 +212,7 @@ async def emishows_client(
 @pytest_asyncio.fixture(scope="session")
 async def client(
     app: Litestar,
-    fusion: AsyncDockerContainer,
+    emifuse: AsyncDockerContainer,
     emirecords: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncTestClient, None]:
     """Reusable test client."""

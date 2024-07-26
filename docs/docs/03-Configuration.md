@@ -22,11 +22,11 @@ You can configure the app at runtime using various environment variables:
 - `EMISTREAM__STREAM__WINDOW` -
   time window to search for event instances around the current time
   (default: `PT1H`)
-- `EMISTREAM__FUSION__SRT__HOST` -
-  host of the SRT stream of the fusion service
+- `EMISTREAM__EMIFUSE__SRT__HOST` -
+  host of the SRT stream of the emifuse service
   (default: `localhost`)
-- `EMISTREAM__FUSION__SRT__PORT` -
-  port of the SRT stream of the fusion service
+- `EMISTREAM__EMIFUSE__SRT__PORT` -
+  port of the SRT stream of the emifuse service
   (default: `9000`)
 - `EMISTREAM__EMIRECORDS__HTTP__SCHEME` -
   scheme of the HTTP API of the emirecords service
