@@ -1,17 +1,23 @@
 from litestar import Controller as BaseController
-from litestar import get
+from litestar import handlers
 from litestar.channels import ChannelsPlugin
 from litestar.di import Provide
 from litestar.response import ServerSentEvent
 
+from emistream.api.routes.sse import models as m
 from emistream.api.routes.sse.service import Service
+from emistream.services.events.service import EventsService
 
 
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
     async def _build_service(self, channels: ChannelsPlugin) -> Service:
-        return Service(channels)
+        return Service(
+            events=EventsService(
+                channels=channels,
+            ),
+        )
 
     def build(self) -> dict[str, Provide]:
         return {
@@ -24,9 +30,14 @@ class Controller(BaseController):
 
     dependencies = DependenciesBuilder().build()
 
-    @get(
+    @handlers.get(
         summary="Get SSE stream",
-        description="Get a stream of Server-Sent Events.",
     )
     async def subscribe(self, service: Service) -> ServerSentEvent:
-        return ServerSentEvent(service.subscribe())
+        """Get a stream of Server-Sent Events."""
+
+        req = m.SubscribeRequest()
+
+        res = await service.subscribe(req)
+
+        return ServerSentEvent(res.messages)
