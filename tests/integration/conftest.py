@@ -31,8 +31,8 @@ def app(config: Config) -> Litestar:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def streamcast() -> AsyncGenerator[AsyncDockerContainer, None]:
-    """Streamcast container."""
+async def emicast() -> AsyncGenerator[AsyncDockerContainer]:
+    """Emicast container."""
 
     async def _check() -> None:
         auth = BasicAuth(username="admin", password="password")
@@ -41,7 +41,7 @@ async def streamcast() -> AsyncGenerator[AsyncDockerContainer, None]:
             response.raise_for_status()
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/apps/streamcast:latest",
+        "ghcr.io/radio-aktywne/apps/emicast:latest",
         network="host",
     )
 
@@ -57,8 +57,8 @@ async def streamcast() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 @pytest_asyncio.fixture(scope="session")
 async def emifuse(
-    streamcast: AsyncDockerContainer,
-) -> AsyncGenerator[AsyncDockerContainer, None]:
+    emicast: AsyncDockerContainer,
+) -> AsyncGenerator[AsyncDockerContainer]:
     """Emifuse container."""
 
     container = AsyncDockerContainer(
@@ -72,7 +72,7 @@ async def emifuse(
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datarecords() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def datarecords() -> AsyncGenerator[AsyncDockerContainer]:
     """Datarecords container."""
 
     async def _check() -> None:
@@ -98,7 +98,7 @@ async def datarecords() -> AsyncGenerator[AsyncDockerContainer, None]:
 @pytest_asyncio.fixture(scope="session")
 async def emirecords(
     datarecords: AsyncDockerContainer,
-) -> AsyncGenerator[AsyncDockerContainer, None]:
+) -> AsyncGenerator[AsyncDockerContainer]:
     """Emirecords container."""
 
     async def _check() -> None:
@@ -122,7 +122,7 @@ async def emirecords(
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datashows() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def datashows() -> AsyncGenerator[AsyncDockerContainer]:
     """Datashows container."""
 
     container = AsyncDockerContainer(
@@ -149,7 +149,7 @@ async def datashows() -> AsyncGenerator[AsyncDockerContainer, None]:
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datatimes() -> AsyncGenerator[AsyncDockerContainer, None]:
+async def datatimes() -> AsyncGenerator[AsyncDockerContainer]:
     """Datatimes container."""
 
     async def _check() -> None:
@@ -176,7 +176,7 @@ async def datatimes() -> AsyncGenerator[AsyncDockerContainer, None]:
 @pytest_asyncio.fixture(scope="session")
 async def emishows(
     datashows: AsyncDockerContainer, datatimes: AsyncDockerContainer
-) -> AsyncGenerator[AsyncDockerContainer, None]:
+) -> AsyncGenerator[AsyncDockerContainer]:
     """Emishows container."""
 
     async def _check() -> None:
@@ -202,7 +202,7 @@ async def emishows(
 @pytest_asyncio.fixture(scope="session")
 async def emishows_client(
     emishows: AsyncDockerContainer,
-) -> AsyncGenerator[AsyncClient, None]:
+) -> AsyncGenerator[AsyncClient]:
     """Emishows client."""
 
     async with AsyncClient(base_url="http://localhost:35000") as client:
@@ -214,7 +214,7 @@ async def client(
     app: Litestar,
     emifuse: AsyncDockerContainer,
     emirecords: AsyncDockerContainer,
-) -> AsyncGenerator[AsyncTestClient, None]:
+) -> AsyncGenerator[AsyncTestClient]:
     """Reusable test client."""
 
     async with AsyncTestClient(app=app) as client:

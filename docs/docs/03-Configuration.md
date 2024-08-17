@@ -1,5 +1,5 @@
 ---
-slug: /configuration
+slug: /config
 title: Configuration
 ---
 
@@ -11,11 +11,14 @@ You can configure the app at runtime using various environment variables:
   host to run the server on
   (default: `0.0.0.0`)
 - `EMISTREAM__SERVER__PORTS__HTTP` -
-  port to listen on for HTTP requests
+  port to listen for HTTP requests on
   (default: `10000`)
 - `EMISTREAM__SERVER__PORTS__SRT` -
-  port to listen on for SRT streams
+  port to listen for SRT connections on
   (default: `10000`)
+- `EMISTREAM__SERVER__TRUSTED` -
+  trusted IP addresses
+  (default: `*`)
 - `EMISTREAM__STREAM__TIMEOUT` -
   time after which a stream will be stopped if no connections are made
   (default: `PT1M`)
@@ -58,3 +61,6 @@ You can configure the app at runtime using various environment variables:
 - `EMISTREAM__EMISHOWS__HTTP__PATH` -
   path of the HTTP API of the emishows service
   (default: ``)
+- `EMISTREAM__DEBUG` -
+  enable debug mode
+  (default: `false`)

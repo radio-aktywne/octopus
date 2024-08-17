@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 import pytest
@@ -9,7 +9,7 @@ from httpx import AsyncClient
 from litestar.status_codes import HTTP_201_CREATED
 from litestar.testing import AsyncTestClient
 
-from emistream.time import naiveutcnow, stringify
+from emistream.utils.time import naiveutcnow, stringify
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -19,8 +19,13 @@ async def show_manager(
     """Context manager that sets up a show in the database."""
 
     @asynccontextmanager
-    async def _setup_show() -> AsyncGenerator[UUID, None]:
-        response = await emishows_client.post("/shows", json={"title": "foo"})
+    async def _setup_show() -> AsyncGenerator[UUID]:
+        response = await emishows_client.post(
+            "/shows",
+            json={
+                "title": "foo",
+            },
+        )
         response.raise_for_status()
 
         uid = response.json()["id"]
@@ -41,7 +46,7 @@ async def event_manager(
     """Context manager that sets up an event in the database."""
 
     @asynccontextmanager
-    async def _setup_event() -> AsyncGenerator[UUID, None]:
+    async def _setup_event() -> AsyncGenerator[UUID]:
         async with show_manager as show:
             start = naiveutcnow()
             end = start + timedelta(hours=1)
@@ -53,7 +58,7 @@ async def event_manager(
                     "showId": str(show),
                     "start": stringify(start),
                     "end": stringify(end),
-                    "timezone": str(timezone.utc),
+                    "timezone": str(UTC),
                 },
             )
             response.raise_for_status()
@@ -76,9 +81,15 @@ async def test_post(
     """Test if POST /reserve returns correct response."""
 
     async with event_manager as event:
-        response = await client.post("/reserve", json={"event": str(event)})
+        response = await client.post(
+            "/reserve",
+            json={
+                "event": str(event),
+            },
+        )
 
-    assert response.status_code == HTTP_201_CREATED
+    status = response.status_code
+    assert status == HTTP_201_CREATED
 
     data = response.json()
     assert "credentials" in data

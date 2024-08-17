@@ -11,7 +11,8 @@ async def test_get(client: AsyncTestClient) -> None:
 
     response = await client.get("/check")
 
-    assert response.status_code == HTTP_200_OK
+    status = response.status_code
+    assert status == HTTP_200_OK
 
     data = response.json()
     assert "event" in data

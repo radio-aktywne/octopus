@@ -13,7 +13,9 @@ associated with the stream, if any.
 For example, you can use [`curl`](https://curl.se) to do that:
 
 ```sh
-curl http://localhost:10000/check
+curl \
+    --request GET \
+    http://localhost:10000/check
 ```
 
 ## Reserving the stream
@@ -28,9 +30,9 @@ For example, you can use [`curl`](https://curl.se) to do that:
 
 ```sh
 curl \
-    -X POST \
-    -H "Content-Type: application/json" \
-    -d '{
+    --request POST \
+    --header "Content-Type: application/json" \
+    --data '{
       "event": "747c31a8-74d2-497f-ba89-cdd85b243e5d",
       "record": true
     }' \
@@ -80,4 +82,34 @@ ffmpeg \
     -f ogg \
     -passphrase "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
     srt://127.0.0.1:10000
+```
+
+## Ping
+
+You can check the status of the app by sending
+either a `GET` or `HEAD` request to the `/ping` endpoint.
+The app should respond with a `204 No Content` status code.
+
+For example, you can use `curl` to do that:
+
+```sh
+curl \
+    --request HEAD \
+    --head \
+    http://localhost:10000/ping
+```
+
+## Server-Sent Events
+
+You can subscribe to the Server-Sent Events (SSE) by sending
+a `GET` request to the `/sse` endpoint.
+The app will send you the events as they happen.
+
+For example, you can use `curl` to do that:
+
+```sh
+curl \
+    --request GET \
+    --no-buffer \
+    http://localhost:10000/sse
 ```
