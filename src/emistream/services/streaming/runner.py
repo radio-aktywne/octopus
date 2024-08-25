@@ -1,13 +1,10 @@
 from math import ceil
-from socket import gethostbyname
 
 from pystreams.ffmpeg import FFmpegNode, FFmpegStreamMetadata, FFmpegTeeNode
 from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetadata
-from pystreams.srt import SRTNode
 from pystreams.stream import Stream
 
 from emistream.config.models import Config
-from emistream.services.emirecords import models as erm
 from emistream.services.emishows import models as esm
 from emistream.services.streaming import models as m
 from emistream.utils.time import naiveutcnow
@@ -24,9 +21,11 @@ class Runner:
         timeout = ceil(timeout.total_seconds() * 1000000)
         timeout = max(timeout, 0)
 
-        return SRTNode(
-            host=self._config.server.host,
-            port=port,
+        host = self._config.server.host
+        target = f"srt://{host}:{port}"
+
+        return FFmpegNode(
+            target=target,
             options={
                 "mode": "listener",
                 "listen_timeout": timeout,
@@ -47,37 +46,52 @@ class Runner:
 
         return self._build_ffmpeg_metadata_options(metadata)
 
+    def _map_format(self, format: m.Format) -> str:
+        match format:
+            case m.Format.OGG:
+                return "ogg"
+
+    def _map_content_type(self, format: m.Format) -> str:
+        match format:
+            case m.Format.OGG:
+                return "audio/ogg"
+
     def _build_emifuse_output(
         self, format: m.Format, metadata: list[str]
     ) -> FFmpegNode:
-        return SRTNode(
-            host=gethostbyname(self._config.emifuse.srt.host),
-            port=self._config.emifuse.srt.port,
+        return FFmpegNode(
+            target=self._config.emifuse.srt.url,
             options={
                 "acodec": "copy",
-                "f": format,
+                "f": self._map_format(format),
                 "metadata": metadata,
             },
         )
 
     def _build_tee_emifuse_output(self, format: m.Format) -> FFmpegNode:
-        return SRTNode(
-            host=gethostbyname(self._config.emifuse.srt.host),
-            port=self._config.emifuse.srt.port,
+        return FFmpegNode(
+            target=self._config.emifuse.srt.url,
             options={
-                "f": format,
+                "f": self._map_format(format),
             },
         )
 
     def _build_tee_emirecords_output(
-        self, format: m.Format, recording: erm.RecordResponseData
+        self, event: esm.Event, instance: esm.EventInstance, format: m.Format
     ) -> FFmpegNode:
-        return SRTNode(
-            host=gethostbyname(self._config.emirecords.srt.host),
-            port=self._config.emirecords.srt.port,
+        id = str(event.id)
+        start = instance.start.isoformat()
+        url = self._config.emirecords.http.url
+
+        target = f"{url}/records/{id}/{start}"
+
+        return FFmpegNode(
+            target=target,
             options={
-                "f": format,
-                "passphrase": recording.credentials.token,
+                "f": self._map_format(format),
+                "content_type": self._map_content_type(format),
+                "method": "PUT",
+                "onfail": "ignore",
             },
         )
 
@@ -86,17 +100,17 @@ class Runner:
         event: esm.Event,
         instance: esm.EventInstance,
         format: m.Format,
-        recording: erm.RecordResponseData | None,
+        record: bool,
     ) -> FFmpegNode:
         metadata = self._build_metadata(event, instance)
 
-        if recording is None:
+        if not record:
             return self._build_emifuse_output(format, metadata)
 
         return FFmpegTeeNode(
             nodes=[
                 self._build_tee_emifuse_output(format),
-                self._build_tee_emirecords_output(format, recording),
+                self._build_tee_emirecords_output(event, instance, format),
             ],
             options={
                 "acodec": "copy",
@@ -112,11 +126,11 @@ class Runner:
         credentials: m.Credentials,
         port: int,
         format: m.Format,
-        recording: erm.RecordResponseData | None,
+        record: bool,
     ) -> ProcessBasedStreamMetadata:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
-            output=self._build_output(event, instance, format, recording),
+            output=self._build_output(event, instance, format, record),
         )
 
     async def _run_stream(self, metadata: ProcessBasedStreamMetadata) -> Stream:
@@ -129,11 +143,11 @@ class Runner:
         credentials: m.Credentials,
         port: int,
         format: m.Format,
-        recording: erm.RecordResponseData | None,
+        record: bool,
     ) -> Stream:
         """Run the stream."""
 
         metadata = self._build_stream_metadata(
-            event, instance, credentials, port, format, recording
+            event, instance, credentials, port, format, record
         )
         return await self._run_stream(metadata)

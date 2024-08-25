@@ -20,9 +20,3 @@ class EmishowsError(ServiceError):
     """Raised when an emishows service operation fails."""
 
     pass
-
-
-class EmirecordsError(ServiceError):
-    """Raised when an emirecords service operation fails."""
-
-    pass

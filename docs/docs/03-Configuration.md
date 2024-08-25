@@ -43,12 +43,6 @@ You can configure the app at runtime using various environment variables:
 - `EMISTREAM__EMIRECORDS__HTTP__PATH` -
   path of the HTTP API of the emirecords service
   (default: ``)
-- `EMISTREAM__EMIRECORDS__SRT__HOST` -
-  host of the SRT stream of the emirecords service
-  (default: `localhost`)
-- `EMISTREAM__EMIRECORDS__SRT__PORT` -
-  port of the SRT stream of the emirecords service
-  (default: `31000`)
 - `EMISTREAM__EMISHOWS__HTTP__SCHEME` -
   scheme of the HTTP API of the emishows service
   (default: `http`)

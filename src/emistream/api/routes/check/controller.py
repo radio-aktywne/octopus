@@ -20,7 +20,6 @@ class DependenciesBuilder:
                 store=state.store,
                 lock=state.lock,
                 emishows=state.emishows,
-                emirecords=state.emirecords,
                 channels=channels,
             ),
         )

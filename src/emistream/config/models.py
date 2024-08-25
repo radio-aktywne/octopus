@@ -1,4 +1,5 @@
 from datetime import timedelta
+from socket import gethostbyname
 
 from pydantic import BaseModel, Field
 
@@ -51,7 +52,10 @@ class EmifuseSRTConfig(BaseModel):
     def url(self) -> str:
         """URL of the SRT stream."""
 
-        return f"srt://{self.host}:{self.port}"
+        host = gethostbyname(self.host)
+        port = self.port
+
+        return f"srt://{host}:{port}"
 
 
 class EmifuseConfig(BaseModel):
@@ -90,30 +94,11 @@ class EmirecordsHTTPConfig(BaseModel):
         return url
 
 
-class EmirecordsSRTConfig(BaseModel):
-    """Configuration for the SRT stream of the emirecords service."""
-
-    host: str = "localhost"
-    """Host of the SRT stream."""
-
-    port: int = Field(31000, ge=1, le=65535)
-    """Port of the SRT stream."""
-
-    @property
-    def url(self) -> str:
-        """URL of the SRT stream."""
-
-        return f"srt://{self.host}:{self.port}"
-
-
 class EmirecordsConfig(BaseModel):
     """Configuration for the emirecords service."""
 
     http: EmirecordsHTTPConfig = EmirecordsHTTPConfig()
     """Configuration for the HTTP API."""
-
-    srt: EmirecordsSRTConfig = EmirecordsSRTConfig()
-    """Configuration for the SRT stream."""
 
 
 class EmishowsHTTPConfig(BaseModel):
