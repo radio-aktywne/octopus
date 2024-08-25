@@ -1,7 +1,7 @@
 [tool.poetry]
 package-mode = true
 name = "emistream"
-version = "0.18.0"
+version = "0.19.0"
 description = "Emission streaming logic 🔴"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
