@@ -20,14 +20,10 @@ class Service:
             yield
         except se.InstanceNotFoundError as ex:
             raise e.ValidationError(str(ex)) from ex
-        except se.RecordingBusyError as ex:
-            raise e.ServiceBusyError(str(ex)) from ex
         except se.StreamBusyError as ex:
             raise e.ServiceBusyError(str(ex)) from ex
         except se.EmishowsError as ex:
             raise e.EmishowsError(str(ex)) from ex
-        except se.EmirecordsError as ex:
-            raise e.EmirecordsError(str(ex)) from ex
         except se.ServiceError as ex:
             raise e.ServiceError(str(ex)) from ex
 

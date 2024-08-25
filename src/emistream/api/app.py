@@ -17,7 +17,6 @@ from pystores.memory import MemoryStore
 
 from emistream.api.routes.router import router
 from emistream.config.models import Config
-from emistream.services.emirecords.service import EmirecordsService
 from emistream.services.emishows.service import EmishowsService
 from emistream.state import State
 
@@ -101,11 +100,6 @@ class AppBuilder:
             config=self._config.emishows,
         )
 
-    def _build_emirecords(self) -> EmirecordsService:
-        return EmirecordsService(
-            config=self._config.emirecords,
-        )
-
     def _build_store(self) -> Store[UUID | None]:
         return MemoryStore[UUID | None](None)
 
@@ -115,7 +109,6 @@ class AppBuilder:
     def _build_initial_state(self) -> State:
         config = self._config
         emishows = self._build_emishows()
-        emirecords = self._build_emirecords()
         store = self._build_store()
         lock = self._build_lock()
 
@@ -123,7 +116,6 @@ class AppBuilder:
             {
                 "config": config,
                 "emishows": emishows,
-                "emirecords": emirecords,
                 "store": store,
                 "lock": lock,
             }

@@ -21,7 +21,7 @@ tzdata = "*"
 # Environment variables loader
 python-dotenv = "^1.0"
 # Streaming utilities
-pystreams = { git = "https://github.com/radio-aktywne/package-pystreams.git", tag = "0.9.0" }
+pystreams = { git = "https://github.com/radio-aktywne/package-pystreams.git", tag = "0.10.0" }
 # Locking utilities
 pylocks = { git = "https://github.com/radio-aktywne/package-pylocks.git", tag = "0.4.0" }
 # Storage utilities

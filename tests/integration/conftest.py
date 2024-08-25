@@ -72,8 +72,8 @@ async def emifuse(
 
 
 @pytest_asyncio.fixture(scope="session")
-async def datarecords() -> AsyncGenerator[AsyncDockerContainer]:
-    """Datarecords container."""
+async def mediarecords() -> AsyncGenerator[AsyncDockerContainer]:
+    """Mediarecords container."""
 
     async def _check() -> None:
         async with AsyncClient(base_url="http://localhost:30000") as client:
@@ -81,7 +81,7 @@ async def datarecords() -> AsyncGenerator[AsyncDockerContainer]:
             response.raise_for_status()
 
     container = AsyncDockerContainer(
-        "ghcr.io/radio-aktywne/databases/datarecords:latest",
+        "ghcr.io/radio-aktywne/databases/mediarecords:latest",
         network="host",
     )
 
@@ -97,7 +97,7 @@ async def datarecords() -> AsyncGenerator[AsyncDockerContainer]:
 
 @pytest_asyncio.fixture(scope="session")
 async def emirecords(
-    datarecords: AsyncDockerContainer,
+    mediarecords: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncDockerContainer]:
     """Emirecords container."""
 
@@ -197,6 +197,16 @@ async def emishows(
     async with container as container:
         await waiter.wait()
         yield container
+
+
+@pytest_asyncio.fixture(scope="session")
+async def emirecords_client(
+    emirecords: AsyncDockerContainer,
+) -> AsyncGenerator[AsyncClient]:
+    """Emirecords client."""
+
+    async with AsyncClient(base_url="http://localhost:31000") as client:
+        yield client
 
 
 @pytest_asyncio.fixture(scope="session")

@@ -1,7 +1,6 @@
 import asyncio
 import secrets
 from datetime import datetime, timedelta, timezone
-from http import HTTPStatus
 from uuid import UUID
 
 from litestar.channels import ChannelsPlugin
@@ -13,9 +12,6 @@ from zoneinfo import ZoneInfo
 from emistream.config.models import Config
 from emistream.models.events import streaming as ev
 from emistream.models.events.event import Event
-from emistream.services.emirecords import errors as ere
-from emistream.services.emirecords import models as erm
-from emistream.services.emirecords.service import EmirecordsService
 from emistream.services.emishows import errors as ese
 from emistream.services.emishows import models as esm
 from emistream.services.emishows.service import EmishowsService
@@ -34,14 +30,12 @@ class StreamingService:
         store: Store[UUID | None],
         lock: Lock,
         emishows: EmishowsService,
-        emirecords: EmirecordsService,
         channels: ChannelsPlugin,
     ) -> None:
         self._config = config
         self._store = store
         self._lock = lock
         self._emishows = emishows
-        self._emirecords = emirecords
         self._channels = channels
 
     def _create_availability(self, event: UUID | None) -> m.Availability:
@@ -125,29 +119,6 @@ class StreamingService:
     def _get_port(self) -> int:
         return self._config.server.ports.srt
 
-    async def _get_recording(
-        self, event: esm.Event, format: m.Format
-    ) -> erm.RecordResponseData:
-        data = erm.RecordRequestData(
-            event=event.id,
-            format=format,
-        )
-        req = erm.RecordRequest(
-            data=data,
-        )
-
-        try:
-            res = await self._emirecords.record.record(req)
-        except ere.ServiceError as ex:
-            if (
-                hasattr(ex, "response")
-                and ex.response.status_code == HTTPStatus.CONFLICT
-            ):
-                raise e.RecordingBusyError() from ex
-            raise e.EmirecordsError(str(ex)) from ex
-
-        return res.data
-
     def _emit_event(self, event: Event) -> None:
         data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
@@ -171,7 +142,7 @@ class StreamingService:
                 raise e.StreamBusyError(current)
 
             await self._store.set(event.id)
-            await self._emit_availability_changed_event(event)
+            await self._emit_availability_changed_event(event.id)
 
     async def _free_event(self) -> None:
         async with self._lock:
@@ -191,7 +162,7 @@ class StreamingService:
         credentials: m.Credentials,
         port: int,
         format: m.Format,
-        recording: erm.RecordResponseData | None,
+        record: bool,
     ) -> None:
         runner = Runner(self._config)
         stream = await runner.run(
@@ -200,7 +171,7 @@ class StreamingService:
             credentials=credentials,
             port=port,
             format=format,
-            recording=recording,
+            record=record,
         )
 
         asyncio.create_task(self._watch_stream(stream))
@@ -234,12 +205,10 @@ class StreamingService:
         credentials = self._generate_credentials()
         port = self._get_port()
 
-        recording = await self._get_recording(event, format) if record else None
-
         await self._reserve_event(event)
 
         try:
-            await self._run(event, instance, credentials, port, format, recording)
+            await self._run(event, instance, credentials, port, format, record)
         except:
             await self._free_event()
             raise
