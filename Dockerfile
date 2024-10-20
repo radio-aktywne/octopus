@@ -66,7 +66,7 @@ COPY .env.python .env.python
 
 # Setup main entrypoint
 COPY scripts/entrypoint.sh scripts/entrypoint.sh
-ENTRYPOINT ["/service/scripts/entrypoint.sh", "poetry", "run", "--", "dotenv", "--file", ".env.python", "run", "--", "emistream"]
+ENTRYPOINT ["/service/scripts/entrypoint.sh", "poetry", "run", "--", "dotenv", "--file", ".env.python", "run", "--", "octopus"]
 CMD []
 
 # Setup ownership

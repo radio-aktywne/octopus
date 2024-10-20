@@ -1,6 +1,6 @@
 [tool.poetry]
 package-mode = true
-name = "emistream"
+name = "octopus"
 version = "0.19.0"
 description = "Broadcast streaming gate 🚧"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
@@ -40,7 +40,7 @@ httpx = "^0.27"
 
 [tool.poetry.scripts]
 # Register CLI
-emistream = "emistream.__main__:cli"
+octopus = "octopus.__main__:cli"
 
 # See: https://python-poetry.org/docs/pyproject/#poetry-and-pep-517
 [build-system]
