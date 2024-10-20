@@ -12,10 +12,10 @@ You can configure the service at runtime using various environment variables:
   (default: `0.0.0.0`)
 - `OCTOPUS__SERVER__PORTS__HTTP` -
   port to listen for HTTP requests on
-  (default: `10000`)
+  (default: `10300`)
 - `OCTOPUS__SERVER__PORTS__SRT` -
   port to listen for SRT connections on
-  (default: `10000`)
+  (default: `10300`)
 - `OCTOPUS__SERVER__TRUSTED` -
   trusted IP addresses
   (default: `*`)
@@ -30,7 +30,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `OCTOPUS__DINGO__SRT__PORT` -
   port of the SRT stream of the dingo service
-  (default: `9000`)
+  (default: `10100`)
 - `OCTOPUS__GECKO__HTTP__SCHEME` -
   scheme of the HTTP API of the gecko service
   (default: `http`)
@@ -39,7 +39,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `OCTOPUS__GECKO__HTTP__PORT` -
   port of the HTTP API of the gecko service
-  (default: `31000`)
+  (default: `10700`)
 - `OCTOPUS__GECKO__HTTP__PATH` -
   path of the HTTP API of the gecko service
   (default: ``)
@@ -51,7 +51,7 @@ You can configure the service at runtime using various environment variables:
   (default: `localhost`)
 - `OCTOPUS__BEAVER__HTTP__PORT` -
   port of the HTTP API of the beaver service
-  (default: `35000`)
+  (default: `10500`)
 - `OCTOPUS__BEAVER__HTTP__PATH` -
   path of the HTTP API of the beaver service
   (default: ``)

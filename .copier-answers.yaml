@@ -10,7 +10,7 @@ envprefix: OCTOPUS
 events: true
 imagename: services/octopus
 importname: octopus
-port: 10000
+port: 10300
 registry: true
 releases: true
 reponame: octopus
