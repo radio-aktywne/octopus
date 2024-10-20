@@ -1,7 +1,7 @@
 [tool.poetry]
 package-mode = true
 name = "octopus"
-version = "0.19.0"
+version = "0.20.0"
 description = "Broadcast streaming gate 🚧"
 authors = ["radio-aktywne <it@radioaktywne.pl>"]
 
