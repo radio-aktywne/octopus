@@ -3,9 +3,9 @@ slug: /
 title: Index
 ---
 
-# emistream app
+# emistream
 
-Emission streaming logic 🔴
+Broadcast streaming gate 🚧
 
 ## 💡 About
 

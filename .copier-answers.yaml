@@ -1,19 +1,19 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: 0.16.0
-_src_path: gh:radio-aktywne/template-app-litestar
+_commit: 0.17.0
+_src_path: gh:radio-aktywne/template-service-litestar
 accountname: radio-aktywne
-appname: emistream
-description: Emission streaming logic 🔴
+description: Broadcast streaming gate 🚧
 docs: true
-docsurl: https://radio-aktywne.github.io/app-emistream
+docsurl: https://radio-aktywne.github.io/emistream
 email: it@radioaktywne.pl
 envprefix: EMISTREAM
 events: true
-imagename: apps/emistream
+imagename: services/emistream
 importname: emistream
 port: 10000
 registry: true
 releases: true
-reponame: app-emistream
-repourl: https://github.com/radio-aktywne/app-emistream
+reponame: emistream
+repourl: https://github.com/radio-aktywne/emistream
+servicename: emistream
 sse: true

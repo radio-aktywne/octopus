@@ -9,13 +9,13 @@ from emistream.services.emishows.service import EmishowsService
 
 
 class State(LitestarState):
-    """Use this class as a type hint for the state of the application."""
+    """Use this class as a type hint for the state of the service."""
 
     config: Config
-    """Configuration for the application."""
+    """Configuration for the service."""
 
     emishows: EmishowsService
-    """Service for emishows API."""
+    """Service for emishows service."""
 
     store: Store[UUID | None]
     """Store for the state of currently streamed event."""

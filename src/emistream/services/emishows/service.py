@@ -6,7 +6,7 @@ from emistream.services.emishows.serializer import Serializer
 
 
 class Endpoint(BaseEndpoint):
-    """Endpoints for emishows API."""
+    """Endpoints for emishows service."""
 
     SCHEDULE = "/schedule"
 
@@ -64,6 +64,6 @@ class ScheduleNamespace(GracyNamespace[Endpoint]):
 
 
 class EmishowsService(BaseService):
-    """Service for emishows API."""
+    """Service for emishows service."""
 
     schedule: ScheduleNamespace
