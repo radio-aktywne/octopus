@@ -9,18 +9,18 @@ from httpx import AsyncClient
 from litestar.status_codes import HTTP_201_CREATED
 from litestar.testing import AsyncTestClient
 
-from emistream.utils.time import naiveutcnow, stringify
+from octopus.utils.time import naiveutcnow, stringify
 
 
 @pytest_asyncio.fixture(scope="session")
 async def show_manager(
-    emishows_client: AsyncClient,
+    beaver_client: AsyncClient,
 ) -> AbstractAsyncContextManager[UUID]:
     """Context manager that sets up a show in the database."""
 
     @asynccontextmanager
     async def _setup_show() -> AsyncGenerator[UUID]:
-        response = await emishows_client.post(
+        response = await beaver_client.post(
             "/shows",
             json={
                 "title": "foo",
@@ -33,7 +33,7 @@ async def show_manager(
         try:
             yield UUID(uid)
         finally:
-            response = await emishows_client.delete(f"/shows/{uid}")
+            response = await beaver_client.delete(f"/shows/{uid}")
             response.raise_for_status()
 
     return _setup_show()
@@ -41,7 +41,7 @@ async def show_manager(
 
 @pytest_asyncio.fixture(scope="session")
 async def event_manager(
-    emishows_client: AsyncClient, show_manager: AbstractAsyncContextManager[UUID]
+    beaver_client: AsyncClient, show_manager: AbstractAsyncContextManager[UUID]
 ) -> AbstractAsyncContextManager[UUID]:
     """Context manager that sets up an event in the database."""
 
@@ -51,7 +51,7 @@ async def event_manager(
             start = naiveutcnow()
             end = start + timedelta(hours=1)
 
-            response = await emishows_client.post(
+            response = await beaver_client.post(
                 "/events",
                 json={
                     "type": "live",
@@ -68,7 +68,7 @@ async def event_manager(
             try:
                 yield UUID(uid)
             finally:
-                response = await emishows_client.delete(f"/events/{uid}")
+                response = await beaver_client.delete(f"/events/{uid}")
                 response.raise_for_status()
 
     return _setup_event()

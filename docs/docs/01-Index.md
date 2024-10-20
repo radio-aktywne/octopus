@@ -3,10 +3,10 @@ slug: /
 title: Index
 ---
 
-# emistream
+# octopus
 
 Broadcast streaming gate 🚧
 
 ## 💡 About
 
-`emistream` is a service that manages what is currently being streamed.
+`octopus` is a service that manages what is currently being streamed.

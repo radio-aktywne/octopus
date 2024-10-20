@@ -4,16 +4,16 @@ _src_path: gh:radio-aktywne/template-service-litestar
 accountname: radio-aktywne
 description: Broadcast streaming gate 🚧
 docs: true
-docsurl: https://radio-aktywne.github.io/emistream
+docsurl: https://radio-aktywne.github.io/octopus
 email: it@radioaktywne.pl
-envprefix: EMISTREAM
+envprefix: OCTOPUS
 events: true
-imagename: services/emistream
-importname: emistream
+imagename: services/octopus
+importname: octopus
 port: 10000
 registry: true
 releases: true
-reponame: emistream
-repourl: https://github.com/radio-aktywne/emistream
-servicename: emistream
+reponame: octopus
+repourl: https://github.com/radio-aktywne/octopus
+servicename: octopus
 sse: true
