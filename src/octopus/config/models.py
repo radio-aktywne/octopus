@@ -9,10 +9,10 @@ from octopus.config.base import BaseConfig
 class ServerPortsConfig(BaseModel):
     """Configuration for the server ports."""
 
-    http: int = Field(10000, ge=0, le=65535)
+    http: int = Field(10300, ge=0, le=65535)
     """Port to listen for HTTP requests on."""
 
-    srt: int = Field(10000, ge=0, le=65535)
+    srt: int = Field(10300, ge=0, le=65535)
     """Port to listen for SRT connections on."""
 
 
@@ -48,7 +48,7 @@ class BeaverHTTPConfig(BaseModel):
     host: str = "localhost"
     """Host of the HTTP API."""
 
-    port: int | None = Field(35000, ge=1, le=65535)
+    port: int | None = Field(10500, ge=1, le=65535)
     """Port of the HTTP API."""
 
     path: str | None = None
@@ -81,7 +81,7 @@ class DingoSRTConfig(BaseModel):
     host: str = "localhost"
     """Host of the SRT stream."""
 
-    port: int = Field(9000, ge=1, le=65535)
+    port: int = Field(10100, ge=1, le=65535)
     """Port of the SRT stream."""
 
     @property
@@ -110,7 +110,7 @@ class GeckoHTTPConfig(BaseModel):
     host: str = "localhost"
     """Host of the HTTP API."""
 
-    port: int | None = Field(31000, ge=1, le=65535)
+    port: int | None = Field(10700, ge=1, le=65535)
     """Port of the HTTP API."""
 
     path: str | None = None

@@ -15,7 +15,7 @@ For example, you can use [`curl`](https://curl.se) to do that:
 ```sh
 curl \
     --request GET \
-    http://localhost:10000/check
+    http://localhost:10300/check
 ```
 
 ## Reserving the stream
@@ -36,7 +36,7 @@ curl \
       "event": "747c31a8-74d2-497f-ba89-cdd85b243e5d",
       "record": true
     }' \
-    http://localhost:10000/reserve
+    http://localhost:10300/reserve
 ```
 
 You should receive a response containing the credentials and port number
@@ -64,7 +64,7 @@ For example, you can use [`Liquidsoap`](https://www.liquidsoap.info) for that:
 liquidsoap \
     'output.srt(
         host="127.0.0.1",
-        port=10000,
+        port=10300,
         passphrase="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         %ogg(%opus),
         sine()
@@ -81,7 +81,7 @@ ffmpeg \
     -c libopus \
     -f ogg \
     -passphrase "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
-    srt://127.0.0.1:10000
+    srt://127.0.0.1:10300
 ```
 
 ## Ping
@@ -96,7 +96,7 @@ For example, you can use `curl` to do that:
 curl \
     --request HEAD \
     --head \
-    http://localhost:10000/ping
+    http://localhost:10300/ping
 ```
 
 ## Server-Sent Events
@@ -111,5 +111,5 @@ For example, you can use `curl` to do that:
 curl \
     --request GET \
     --no-buffer \
-    http://localhost:10000/sse
+    http://localhost:10300/sse
 ```
