@@ -155,5 +155,5 @@ class Config(BaseConfig):
     gecko: GeckoConfig = GeckoConfig()
     """Configuration for the gecko service."""
 
-    debug: bool = False
+    debug: bool = True
     """Enable debug mode."""

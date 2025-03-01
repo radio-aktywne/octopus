@@ -30,7 +30,7 @@ def app(config: Config) -> Litestar:
     return AppBuilder(config).build()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def quokka() -> AsyncGenerator[AsyncDockerContainer]:
     """Quokka container."""
 
@@ -55,7 +55,7 @@ async def quokka() -> AsyncGenerator[AsyncDockerContainer]:
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def dingo(
     quokka: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncDockerContainer]:
@@ -71,7 +71,7 @@ async def dingo(
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def emerald() -> AsyncGenerator[AsyncDockerContainer]:
     """Emerald container."""
 
@@ -95,7 +95,7 @@ async def emerald() -> AsyncGenerator[AsyncDockerContainer]:
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def gecko(
     emerald: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncDockerContainer]:
@@ -121,7 +121,7 @@ async def gecko(
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
     """Howlite container."""
 
@@ -146,7 +146,7 @@ async def howlite() -> AsyncGenerator[AsyncDockerContainer]:
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
     """Sapphire container."""
 
@@ -173,7 +173,7 @@ async def sapphire() -> AsyncGenerator[AsyncDockerContainer]:
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def beaver(
     howlite: AsyncDockerContainer, sapphire: AsyncDockerContainer
 ) -> AsyncGenerator[AsyncDockerContainer]:
@@ -199,7 +199,7 @@ async def beaver(
         yield container
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def gecko_client(
     gecko: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncClient]:
@@ -209,7 +209,7 @@ async def gecko_client(
         yield client
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def beaver_client(
     beaver: AsyncDockerContainer,
 ) -> AsyncGenerator[AsyncClient]:
@@ -219,7 +219,7 @@ async def beaver_client(
         yield client
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session", scope="session")
 async def client(
     app: Litestar,
     dingo: AsyncDockerContainer,

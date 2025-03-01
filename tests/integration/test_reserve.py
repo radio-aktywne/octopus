@@ -12,7 +12,7 @@ from litestar.testing import AsyncTestClient
 from octopus.utils.time import naiveutcnow, stringify
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session")
 async def show_manager(
     beaver_client: AsyncClient,
 ) -> AbstractAsyncContextManager[UUID]:
@@ -39,7 +39,7 @@ async def show_manager(
     return _setup_show()
 
 
-@pytest_asyncio.fixture(scope="session")
+@pytest_asyncio.fixture(loop_scope="session")
 async def event_manager(
     beaver_client: AsyncClient, show_manager: AbstractAsyncContextManager[UUID]
 ) -> AbstractAsyncContextManager[UUID]:
@@ -74,7 +74,7 @@ async def event_manager(
     return _setup_event()
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_post(
     client: AsyncTestClient, event_manager: AbstractAsyncContextManager[UUID]
 ) -> None:

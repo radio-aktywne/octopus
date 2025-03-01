@@ -20,5 +20,5 @@ services:
       - "OCTOPUS__GECKO__HTTP__HOST=${OCTOPUS__GECKO__HTTP__HOST:-localhost}"
       - "OCTOPUS__GECKO__HTTP__PORT=${OCTOPUS__GECKO__HTTP__PORT:-10700}"
       - "OCTOPUS__GECKO__HTTP__PATH=${OCTOPUS__GECKO__HTTP__PATH:-}"
-      - "OCTOPUS__DEBUG=${OCTOPUS__DEBUG:-false}"
+      - "OCTOPUS__DEBUG=${OCTOPUS__DEBUG:-true}"
     network_mode: host

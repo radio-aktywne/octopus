@@ -5,7 +5,7 @@ from litestar.status_codes import HTTP_200_OK
 from litestar.testing import AsyncTestClient
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_get(client: AsyncTestClient) -> None:
     """Test if GET /check returns correct response."""
 
