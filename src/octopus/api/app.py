@@ -7,9 +7,9 @@ from uuid import UUID
 from litestar import Litestar, Router
 from litestar.channels import ChannelsPlugin
 from litestar.channels.backends.memory import MemoryChannelsBackend
-from litestar.contrib.pydantic import PydanticPlugin
 from litestar.openapi import OpenAPIConfig
 from litestar.plugins import PluginProtocol
+from litestar.plugins.pydantic import PydanticPlugin
 from pylocks.asyncio import AsyncioLock
 from pylocks.base import Lock
 from pystores.base import Store
