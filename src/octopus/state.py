@@ -11,14 +11,14 @@ from octopus.services.beaver.service import BeaverService
 class State(LitestarState):
     """Use this class as a type hint for the state of the service."""
 
-    config: Config
-    """Configuration for the service."""
-
     beaver: BeaverService
     """Service for beaver service."""
 
-    store: Store[UUID | None]
-    """Store for the state of currently streamed event."""
+    config: Config
+    """Configuration for the service."""
 
     lock: Lock
     """Lock for the store."""
+
+    store: Store[UUID | None]
+    """Store for the state of currently streamed event."""

@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import Annotated
 
 from litestar import Controller as BaseController
@@ -30,7 +31,8 @@ class DependenciesBuilder:
             ),
         )
 
-    def build(self) -> dict[str, Provide]:
+    def build(self) -> Mapping[str, Provide]:
+        """Build the dependencies."""
         return {
             "service": Provide(self._build_service),
         }
@@ -59,19 +61,18 @@ class Controller(BaseController):
         ],
     ) -> Response[m.ReserveResponseData]:
         """Reserve a stream."""
-
-        data = Validator(m.ReserveRequestData).object(data)
+        parsed_data = Validator[m.ReserveRequestData].validate_object(data)
 
         req = m.ReserveRequest(
-            data=data,
+            data=parsed_data,
         )
 
         try:
             res = await service.reserve(req)
         except e.ValidationError as ex:
-            raise UnprocessableContentException(extra=str(ex)) from ex
+            raise UnprocessableContentException from ex
         except e.ServiceBusyError as ex:
-            raise ConflictException(extra=str(ex)) from ex
+            raise ConflictException from ex
 
         rdata = res.data
 

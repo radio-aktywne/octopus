@@ -1,33 +1,21 @@
 from datetime import datetime
-from typing import Annotated, TypeVar
+from typing import Annotated
 
 from pydantic import Field
 
 from octopus.models.base import SerializableModel
-from octopus.utils.time import naiveutcnow
 
-TypeType = TypeVar("TypeType")
-
-DataType = TypeVar("DataType", bound=SerializableModel)
-
-TypeFieldType = Annotated[
-    TypeType,
-    Field(
-        description="Type of the event.",
-    ),
+type TypeField[T] = Annotated[
+    T,
+    Field(description="Type of the event."),
 ]
 
-CreatedAtFieldType = Annotated[
+type CreatedAtField = Annotated[
     datetime,
-    Field(
-        default_factory=naiveutcnow,
-        description="Time at which the event was created.",
-    ),
+    Field(description="Time at which the event was created."),
 ]
 
-DataFieldType = Annotated[
-    DataType,
-    Field(
-        description="Data of the event.",
-    ),
+type DataField[T: SerializableModel] = Annotated[
+    T,
+    Field(description="Data of the event."),
 ]

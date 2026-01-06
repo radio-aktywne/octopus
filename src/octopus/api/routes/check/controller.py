@@ -1,3 +1,5 @@
+from collections.abc import Mapping
+
 from litestar import Controller as BaseController
 from litestar import handlers
 from litestar.channels import ChannelsPlugin
@@ -24,7 +26,8 @@ class DependenciesBuilder:
             ),
         )
 
-    def build(self) -> dict[str, Provide]:
+    def build(self) -> Mapping[str, Provide]:
+        """Build the dependencies."""
         return {
             "service": Provide(self._build_service),
         }
@@ -40,7 +43,6 @@ class Controller(BaseController):
     )
     async def check(self, service: Service) -> Response[m.CheckResponseAvailability]:
         """Check the availability of the stream."""
-
         req = m.CheckRequest()
 
         res = await service.check(req)

@@ -1,13 +1,13 @@
 import asyncio
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from litestar.channels import ChannelsPlugin
 from pylocks.base import Lock
 from pystores.base import Store
-from pystreams.stream import Stream
+from pystreams.base import Stream
 
 from octopus.config.models import Config
 from octopus.models.events import streaming as ev
@@ -37,6 +37,7 @@ class StreamingService:
         self._lock = lock
         self._beaver = beaver
         self._channels = channels
+        self._tasks = set[asyncio.Task]()
 
     def _create_availability(self, event: UUID | None) -> m.Availability:
         return m.Availability(
@@ -56,7 +57,7 @@ class StreamingService:
     async def _get_schedule(
         self, event: UUID, start: datetime, end: datetime
     ) -> bm.Schedule:
-        req = bm.ListRequest(
+        req = bm.ScheduleListRequest(
             start=start,
             end=end,
             limit=None,
@@ -94,7 +95,7 @@ class StreamingService:
         def _compare(instance: bm.EventInstance) -> timedelta:
             tz = ZoneInfo(schedule.event.timezone)
             start = instance.start.replace(tzinfo=tz)
-            start = start.astimezone(timezone.utc).replace(tzinfo=None)
+            start = start.astimezone(UTC).replace(tzinfo=None)
             return abs(start - reference)
 
         instance = min(schedule.instances, key=_compare, default=None)
@@ -123,8 +124,8 @@ class StreamingService:
         data = event.model_dump_json(by_alias=True)
         self._channels.publish(data, "events")
 
-    async def _emit_availability_changed_event(self, event: UUID | None) -> None:
-        availability = self._create_availability(event)
+    async def _emit_availability_changed_event(self, event_id: UUID | None) -> None:
+        availability = self._create_availability(event_id)
         availability = ev.Availability.map(availability)
         data = ev.AvailabilityChangedEventData(
             availability=availability,
@@ -155,13 +156,14 @@ class StreamingService:
         finally:
             await self._free_event()
 
-    async def _run(
+    async def _run(  # noqa: PLR0913
         self,
         event: bm.Event,
         instance: bm.EventInstance,
         credentials: m.Credentials,
         port: int,
-        format: m.Format,
+        fmt: m.Format,
+        *,
         record: bool,
     ) -> None:
         runner = Runner(self._config)
@@ -170,15 +172,16 @@ class StreamingService:
             instance=instance,
             credentials=credentials,
             port=port,
-            format=format,
+            fmt=fmt,
             record=record,
         )
 
-        asyncio.create_task(self._watch_stream(stream))
+        task = asyncio.create_task(self._watch_stream(stream))
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
 
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
-
         async with self._lock:
             event = await self._store.get()
 
@@ -190,9 +193,8 @@ class StreamingService:
 
     async def reserve(self, request: m.ReserveRequest) -> m.ReserveResponse:
         """Reserve a stream."""
-
         event = request.event
-        format = request.format
+        fmt = request.format
         record = request.record
 
         reference = self._get_reference_time()
@@ -208,7 +210,7 @@ class StreamingService:
         await self._reserve_event(event)
 
         try:
-            await self._run(event, instance, credentials, port, format, record)
+            await self._run(event, instance, credentials, port, fmt, record=record)
         except:
             await self._free_event()
             raise

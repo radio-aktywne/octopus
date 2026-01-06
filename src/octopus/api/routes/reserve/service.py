@@ -29,14 +29,13 @@ class Service:
 
     async def reserve(self, request: m.ReserveRequest) -> m.ReserveResponse:
         """Reserve a stream."""
-
         event = request.data.event
-        format = request.data.format
+        fmt = request.data.format
         record = request.data.record
 
         req = sm.ReserveRequest(
             event=event,
-            format=format,
+            format=fmt,
             record=record,
         )
 

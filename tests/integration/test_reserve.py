@@ -79,7 +79,6 @@ async def test_post(
     client: AsyncTestClient, event_manager: AbstractAsyncContextManager[UUID]
 ) -> None:
     """Test if POST /reserve returns correct response."""
-
     async with event_manager as event:
         response = await client.post(
             "/reserve",

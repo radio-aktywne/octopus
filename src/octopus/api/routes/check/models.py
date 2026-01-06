@@ -16,6 +16,7 @@ class Availability(SerializableModel):
 
     @staticmethod
     def map(availability: sm.Availability) -> "Availability":
+        """Map to internal representation."""
         return Availability(
             event=availability.event,
             checked_at=availability.checked_at,
@@ -28,8 +29,6 @@ CheckResponseAvailability = Availability
 @datamodel
 class CheckRequest:
     """Request to check the availability of a stream."""
-
-    pass
 
 
 @datamodel
