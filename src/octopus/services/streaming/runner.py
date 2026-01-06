@@ -1,8 +1,9 @@
+from collections.abc import Mapping, Sequence
 from math import ceil
 
+from pystreams.base import Stream
 from pystreams.ffmpeg import FFmpegNode, FFmpegStreamMetadata, FFmpegTeeNode
 from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetadata
-from pystreams.stream import Stream
 
 from octopus.config.models import Config
 from octopus.services.beaver import models as bm
@@ -33,10 +34,14 @@ class Runner:
             },
         )
 
-    def _build_ffmpeg_metadata_options(self, metadata: dict[str, str]) -> list[str]:
+    def _build_ffmpeg_metadata_options(
+        self, metadata: Mapping[str, str]
+    ) -> Sequence[str]:
         return [f"{key}={value}" for key, value in metadata.items()]
 
-    def _build_metadata(self, event: bm.Event, instance: bm.EventInstance) -> list[str]:
+    def _build_metadata(
+        self, event: bm.Event, instance: bm.EventInstance
+    ) -> Sequence[str]:
         metadata = {}
 
         if event.show is not None:
@@ -44,48 +49,48 @@ class Runner:
 
         return self._build_ffmpeg_metadata_options(metadata)
 
-    def _map_format(self, format: m.Format) -> str:
-        match format:
+    def _map_format(self, fmt: m.Format) -> str:
+        match fmt:
             case m.Format.OGG:
                 return "ogg"
 
-    def _map_content_type(self, format: m.Format) -> str:
-        match format:
+    def _map_content_type(self, fmt: m.Format) -> str:
+        match fmt:
             case m.Format.OGG:
                 return "audio/ogg"
 
-    def _build_dingo_output(self, format: m.Format, metadata: list[str]) -> FFmpegNode:
+    def _build_dingo_output(self, fmt: m.Format, metadata: Sequence[str]) -> FFmpegNode:
         return FFmpegNode(
             target=self._config.dingo.srt.url,
             options={
                 "acodec": "copy",
-                "f": self._map_format(format),
+                "f": self._map_format(fmt),
                 "metadata": metadata,
             },
         )
 
-    def _build_tee_dingo_output(self, format: m.Format) -> FFmpegNode:
+    def _build_tee_dingo_output(self, fmt: m.Format) -> FFmpegNode:
         return FFmpegNode(
             target=self._config.dingo.srt.url,
             options={
-                "f": self._map_format(format),
+                "f": self._map_format(fmt),
             },
         )
 
     def _build_tee_gecko_output(
-        self, event: bm.Event, instance: bm.EventInstance, format: m.Format
+        self, event: bm.Event, instance: bm.EventInstance, fmt: m.Format
     ) -> FFmpegNode:
-        id = str(event.id)
+        event_id = str(event.id)
         start = instance.start.isoformat()
         url = self._config.gecko.http.url
 
-        target = f"{url}/records/{id}/{start}"
+        target = f"{url}/records/{event_id}/{start}"
 
         return FFmpegNode(
             target=target,
             options={
-                "f": self._map_format(format),
-                "content_type": self._map_content_type(format),
+                "f": self._map_format(fmt),
+                "content_type": self._map_content_type(fmt),
                 "method": "PUT",
                 "onfail": "ignore",
             },
@@ -95,18 +100,19 @@ class Runner:
         self,
         event: bm.Event,
         instance: bm.EventInstance,
-        format: m.Format,
+        fmt: m.Format,
+        *,
         record: bool,
     ) -> FFmpegNode:
         metadata = self._build_metadata(event, instance)
 
         if not record:
-            return self._build_dingo_output(format, metadata)
+            return self._build_dingo_output(fmt, metadata)
 
         return FFmpegTeeNode(
             nodes=[
-                self._build_tee_dingo_output(format),
-                self._build_tee_gecko_output(event, instance, format),
+                self._build_tee_dingo_output(fmt),
+                self._build_tee_gecko_output(event, instance, fmt),
             ],
             options={
                 "acodec": "copy",
@@ -115,35 +121,36 @@ class Runner:
             },
         )
 
-    def _build_stream_metadata(
+    def _build_stream_metadata(  # noqa: PLR0913
         self,
         event: bm.Event,
         instance: bm.EventInstance,
         credentials: m.Credentials,
         port: int,
-        format: m.Format,
+        fmt: m.Format,
+        *,
         record: bool,
     ) -> ProcessBasedStreamMetadata:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
-            output=self._build_output(event, instance, format, record),
+            output=self._build_output(event, instance, fmt, record=record),
         )
 
     async def _run_stream(self, metadata: ProcessBasedStreamMetadata) -> Stream:
         return await ProcessBasedStreamFactory().create(metadata)
 
-    async def run(
+    async def run(  # noqa: PLR0913
         self,
         event: bm.Event,
         instance: bm.EventInstance,
         credentials: m.Credentials,
         port: int,
-        format: m.Format,
+        fmt: m.Format,
+        *,
         record: bool,
     ) -> Stream:
         """Run the stream."""
-
         metadata = self._build_stream_metadata(
-            event, instance, credentials, port, format, record
+            event, instance, credentials, port, fmt, record=record
         )
         return await self._run_stream(metadata)

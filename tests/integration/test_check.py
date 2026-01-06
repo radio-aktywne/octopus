@@ -8,7 +8,6 @@ from litestar.testing import AsyncTestClient
 @pytest.mark.asyncio(loop_scope="session")
 async def test_get(client: AsyncTestClient) -> None:
     """Test if GET /check returns correct response."""
-
     response = await client.get("/check")
 
     status = response.status_code

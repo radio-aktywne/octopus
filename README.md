@@ -2,7 +2,7 @@
 
 <div align="center">
 
-Broadcast streaming gate 🚧
+Broadcast streaming gate service 🚧
 
 [![Lint](https://github.com/radio-aktywne/octopus/actions/workflows/lint.yaml/badge.svg)](https://github.com/radio-aktywne/octopus/actions/workflows/lint.yaml)
 [![Test](https://github.com/radio-aktywne/octopus/actions/workflows/test.yaml/badge.svg)](https://github.com/radio-aktywne/octopus/actions/workflows/test.yaml)
@@ -16,7 +16,8 @@ Broadcast streaming gate 🚧
 
 ## 💡 About
 
-`octopus` is a service that manages what is currently being streamed.
+`octopus` is a [`Litestar`](https://litestar.dev) service
+that manages what is currently being streamed.
 
 ## 📄 Further Reading
 

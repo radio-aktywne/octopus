@@ -1,42 +1,10 @@
+from collections.abc import Sequence
 from datetime import timedelta
 from socket import gethostbyname
 
 from pydantic import BaseModel, Field
 
 from octopus.config.base import BaseConfig
-
-
-class ServerPortsConfig(BaseModel):
-    """Configuration for the server ports."""
-
-    http: int = Field(10300, ge=0, le=65535)
-    """Port to listen for HTTP requests on."""
-
-    srt: int = Field(10300, ge=0, le=65535)
-    """Port to listen for SRT connections on."""
-
-
-class ServerConfig(BaseModel):
-    """Configuration for the server."""
-
-    host: str = "0.0.0.0"
-    """Host to run the server on."""
-
-    ports: ServerPortsConfig = ServerPortsConfig()
-    """Configuration for the server ports."""
-
-    trusted: str | list[str] | None = "*"
-    """Trusted IP addresses."""
-
-
-class StreamingConfig(BaseModel):
-    """Configuration for the streaming service."""
-
-    timeout: timedelta = Field(timedelta(minutes=1), ge=0)
-    """Time after which a stream will be stopped if no connections are made."""
-
-    window: timedelta = timedelta(hours=1)
-    """Time window to search for event instances around the current time."""
 
 
 class BeaverHTTPConfig(BaseModel):
@@ -48,7 +16,7 @@ class BeaverHTTPConfig(BaseModel):
     host: str = "localhost"
     """Host of the HTTP API."""
 
-    port: int | None = Field(10500, ge=1, le=65535)
+    port: int | None = Field(default=10500, ge=1, le=65535)
     """Port of the HTTP API."""
 
     path: str | None = None
@@ -57,7 +25,6 @@ class BeaverHTTPConfig(BaseModel):
     @property
     def url(self) -> str:
         """URL of the HTTP API."""
-
         url = f"{self.scheme}://{self.host}"
         if self.port:
             url = f"{url}:{self.port}"
@@ -81,13 +48,12 @@ class DingoSRTConfig(BaseModel):
     host: str = "localhost"
     """Host of the SRT stream."""
 
-    port: int = Field(10100, ge=1, le=65535)
+    port: int = Field(default=10100, ge=1, le=65535)
     """Port of the SRT stream."""
 
     @property
     def url(self) -> str:
         """URL of the SRT stream."""
-
         host = gethostbyname(self.host)
         port = self.port
 
@@ -110,7 +76,7 @@ class GeckoHTTPConfig(BaseModel):
     host: str = "localhost"
     """Host of the HTTP API."""
 
-    port: int | None = Field(10700, ge=1, le=65535)
+    port: int | None = Field(default=10700, ge=1, le=65535)
     """Port of the HTTP API."""
 
     path: str | None = None
@@ -119,7 +85,6 @@ class GeckoHTTPConfig(BaseModel):
     @property
     def url(self) -> str:
         """URL of the HTTP API."""
-
         url = f"{self.scheme}://{self.host}"
         if self.port:
             url = f"{url}:{self.port}"
@@ -137,17 +102,47 @@ class GeckoConfig(BaseModel):
     """Configuration for the HTTP API."""
 
 
+class ServerPortsConfig(BaseModel):
+    """Configuration for the server ports."""
+
+    http: int = Field(default=10300, ge=0, le=65535)
+    """Port to listen for HTTP requests on."""
+
+    srt: int = Field(default=10300, ge=0, le=65535)
+    """Port to listen for SRT connections on."""
+
+
+class ServerConfig(BaseModel):
+    """Configuration for the server."""
+
+    host: str = "0.0.0.0"
+    """Host to run the server on."""
+
+    ports: ServerPortsConfig = ServerPortsConfig()
+    """Configuration for the server ports."""
+
+    trusted: str | Sequence[str] | None = "*"
+    """Trusted IP addresses."""
+
+
+class StreamingConfig(BaseModel):
+    """Configuration for the streaming service."""
+
+    timeout: timedelta = Field(default=timedelta(minutes=1), ge=0)
+    """Time after which a stream will be stopped if no connections are made."""
+
+    window: timedelta = timedelta(hours=1)
+    """Time window to search for event instances around the current time."""
+
+
 class Config(BaseConfig):
     """Configuration for the service."""
 
-    server: ServerConfig = ServerConfig()
-    """Configuration for the server."""
-
-    streaming: StreamingConfig = StreamingConfig()
-    """Configuration for the streaming service."""
-
     beaver: BeaverConfig = BeaverConfig()
     """Configuration for the beaver service."""
+
+    debug: bool = True
+    """Enable debug mode."""
 
     dingo: DingoConfig = DingoConfig()
     """Configuration for the dingo service."""
@@ -155,5 +150,8 @@ class Config(BaseConfig):
     gecko: GeckoConfig = GeckoConfig()
     """Configuration for the gecko service."""
 
-    debug: bool = True
-    """Enable debug mode."""
+    server: ServerConfig = ServerConfig()
+    """Configuration for the server."""
+
+    streaming: StreamingConfig = StreamingConfig()
+    """Configuration for the streaming service."""

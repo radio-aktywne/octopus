@@ -1,3 +1,4 @@
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import Field
@@ -18,6 +19,7 @@ class Credentials(SerializableModel):
 
     @staticmethod
     def map(credentials: sm.Credentials) -> "Credentials":
+        """Map to internal representation."""
         return Credentials(
             token=credentials.token,
             expires_at=credentials.expires_at,
@@ -43,7 +45,7 @@ class ReserveResponseData(SerializableModel):
     credentials: Credentials
     """Credentials to use to connect to the stream."""
 
-    port: int = Field(..., ge=1, le=65535)
+    port: Annotated[int, Field(ge=1, le=65535)]
     """Port to use to connect to the stream."""
 
 

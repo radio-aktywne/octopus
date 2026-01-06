@@ -23,7 +23,6 @@ class Service:
 
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
-
         req = sm.CheckRequest()
 
         with self._handle_errors():

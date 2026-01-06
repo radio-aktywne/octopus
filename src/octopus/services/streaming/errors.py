@@ -4,8 +4,6 @@ from uuid import UUID
 class ServiceError(Exception):
     """Base class for service errors."""
 
-    pass
-
 
 class InstanceNotFoundError(ServiceError):
     """Raised when no near instances of an event are found."""
@@ -23,5 +21,3 @@ class StreamBusyError(ServiceError):
 
 class BeaverError(ServiceError):
     """Raised when an beaver service operation fails."""
-
-    pass

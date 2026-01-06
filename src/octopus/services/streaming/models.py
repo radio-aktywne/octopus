@@ -37,8 +37,6 @@ class Credentials:
 class CheckRequest:
     """Request to check the availability of a stream."""
 
-    pass
-
 
 @datamodel
 class CheckResponse:
