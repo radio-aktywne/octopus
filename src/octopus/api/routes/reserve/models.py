@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Self
 from uuid import UUID
 
 from pydantic import Field
@@ -15,19 +15,16 @@ class Credentials(SerializableModel):
     """Token to use to connect to the stream."""
 
     expires_at: NaiveDatetime
-    """Time in UTC at which the token expires if not used."""
+    """Datetime in UTC at which the token expires if not used."""
 
-    @staticmethod
-    def map(credentials: sm.Credentials) -> "Credentials":
+    @classmethod
+    def map(cls, credentials: sm.Credentials) -> Self:
         """Map to internal representation."""
-        return Credentials(
-            token=credentials.token,
-            expires_at=credentials.expires_at,
-        )
+        return cls(token=credentials.token, expires_at=credentials.expires_at)
 
 
-class ReserveRequestData(SerializableModel):
-    """Data for a reserve request."""
+class ReservationInput(SerializableModel):
+    """Data for reserving a stream."""
 
     event: UUID
     """Identifier of the event to reserve the stream for."""
@@ -39,8 +36,8 @@ class ReserveRequestData(SerializableModel):
     """Whether to record the stream."""
 
 
-class ReserveResponseData(SerializableModel):
-    """Data for a reserve response."""
+class Reservation(SerializableModel):
+    """Reservation of a stream."""
 
     credentials: Credentials
     """Credentials to use to connect to the stream."""
@@ -49,17 +46,22 @@ class ReserveResponseData(SerializableModel):
     """Port to use to connect to the stream."""
 
 
+type ReserveRequestData = ReservationInput
+
+type ReserveResponseReservation = Reservation
+
+
 @datamodel
 class ReserveRequest:
     """Request to reserve a stream."""
 
     data: ReserveRequestData
-    """Data for the request."""
+    """Data for reserving a stream."""
 
 
 @datamodel
 class ReserveResponse:
     """Response for reserving a stream."""
 
-    data: ReserveResponseData
-    """Data for the response."""
+    reservation: ReserveResponseReservation
+    """Reservation of the stream."""

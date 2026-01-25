@@ -1,3 +1,4 @@
+from typing import Self
 from uuid import UUID
 
 from octopus.models.base import SerializableModel, datamodel
@@ -12,18 +13,15 @@ class Availability(SerializableModel):
     """Identifier of the event that is currently being streamed."""
 
     checked_at: NaiveDatetime
-    """Time in UTC at which the availability was checked."""
+    """Datetime in UTC at which the availability was checked."""
 
-    @staticmethod
-    def map(availability: sm.Availability) -> "Availability":
+    @classmethod
+    def map(cls, availability: sm.Availability) -> Self:
         """Map to internal representation."""
-        return Availability(
-            event=availability.event,
-            checked_at=availability.checked_at,
-        )
+        return cls(event=availability.event, checked_at=availability.checked_at)
 
 
-CheckResponseAvailability = Availability
+type CheckResponseAvailability = Availability
 
 
 @datamodel

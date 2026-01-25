@@ -8,7 +8,7 @@ from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetad
 from octopus.config.models import Config
 from octopus.services.beaver import models as bm
 from octopus.services.streaming import models as m
-from octopus.utils.time import naiveutcnow
+from octopus.utils.time import isostringify, naiveutcnow
 
 
 class Runner:
@@ -22,8 +22,7 @@ class Runner:
         timeout = ceil(timeout.total_seconds() * 1000000)
         timeout = max(timeout, 0)
 
-        host = self._config.server.host
-        target = f"srt://{host}:{port}"
+        target = f"srt://{self._config.server.host}:{port}"
 
         return FFmpegNode(
             target=target,
@@ -72,19 +71,13 @@ class Runner:
     def _build_tee_dingo_output(self, fmt: m.Format) -> FFmpegNode:
         return FFmpegNode(
             target=self._config.dingo.srt.url,
-            options={
-                "f": self._map_format(fmt),
-            },
+            options={"f": self._map_format(fmt)},
         )
 
     def _build_tee_gecko_output(
         self, event: bm.Event, instance: bm.EventInstance, fmt: m.Format
     ) -> FFmpegNode:
-        event_id = str(event.id)
-        start = instance.start.isoformat()
-        url = self._config.gecko.http.url
-
-        target = f"{url}/records/{event_id}/{start}"
+        target = f"{self._config.gecko.http.url}/records/{event.id}/{isostringify(instance.start)}"
 
         return FFmpegNode(
             target=target,
@@ -114,11 +107,7 @@ class Runner:
                 self._build_tee_dingo_output(fmt),
                 self._build_tee_gecko_output(event, instance, fmt),
             ],
-            options={
-                "acodec": "copy",
-                "map": 0,
-                "metadata": metadata,
-            },
+            options={"acodec": "copy", "map": 0, "metadata": metadata},
         )
 
     def _build_stream_metadata(  # noqa: PLR0913

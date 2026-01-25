@@ -8,6 +8,7 @@ from litestar.response import Response
 
 from octopus.api.routes.check import models as m
 from octopus.api.routes.check.service import Service
+from octopus.models.base import Serializable
 from octopus.services.streaming.service import StreamingService
 from octopus.state import State
 
@@ -41,12 +42,12 @@ class Controller(BaseController):
     @handlers.get(
         summary="Check availability",
     )
-    async def check(self, service: Service) -> Response[m.CheckResponseAvailability]:
+    async def check(
+        self, service: Service
+    ) -> Response[Serializable[m.CheckResponseAvailability]]:
         """Check the availability of the stream."""
-        req = m.CheckRequest()
+        request = m.CheckRequest()
 
-        res = await service.check(req)
+        response = await service.check(request)
 
-        availability = res.availability
-
-        return Response(availability)
+        return Response(Serializable(response.availability))

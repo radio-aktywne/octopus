@@ -9,8 +9,6 @@ from httpx import AsyncClient
 from litestar.status_codes import HTTP_201_CREATED
 from litestar.testing import AsyncTestClient
 
-from octopus.utils.time import naiveutcnow, stringify
-
 
 @pytest_asyncio.fixture(loop_scope="session")
 async def show_manager(
@@ -20,20 +18,15 @@ async def show_manager(
 
     @asynccontextmanager
     async def _setup_show() -> AsyncGenerator[UUID]:
-        response = await beaver_client.post(
-            "/shows",
-            json={
-                "title": "foo",
-            },
-        )
+        response = await beaver_client.post("/shows", json={"title": "foo"})
         response.raise_for_status()
 
-        uid = response.json()["id"]
+        show_id = response.json()["id"]
 
         try:
-            yield UUID(uid)
+            yield UUID(show_id)
         finally:
-            response = await beaver_client.delete(f"/shows/{uid}")
+            response = await beaver_client.delete(f"/shows/{show_id}")
             response.raise_for_status()
 
     return _setup_show()
@@ -48,7 +41,7 @@ async def event_manager(
     @asynccontextmanager
     async def _setup_event() -> AsyncGenerator[UUID]:
         async with show_manager as show:
-            start = naiveutcnow()
+            start = datetime.now(UTC).replace(tzinfo=None)
             end = start + timedelta(hours=1)
 
             response = await beaver_client.post(
@@ -56,19 +49,19 @@ async def event_manager(
                 json={
                     "type": "live",
                     "showId": str(show),
-                    "start": stringify(start),
-                    "end": stringify(end),
+                    "start": start.isoformat(),
+                    "end": end.isoformat(),
                     "timezone": str(UTC),
                 },
             )
             response.raise_for_status()
 
-            uid = response.json()["id"]
+            event_id = response.json()["id"]
 
             try:
-                yield UUID(uid)
+                yield UUID(event_id)
             finally:
-                response = await beaver_client.delete(f"/events/{uid}")
+                response = await beaver_client.delete(f"/events/{event_id}")
                 response.raise_for_status()
 
     return _setup_event()
@@ -80,12 +73,7 @@ async def test_post(
 ) -> None:
     """Test if POST /reserve returns correct response."""
     async with event_manager as event:
-        response = await client.post(
-            "/reserve",
-            json={
-                "event": str(event),
-            },
-        )
+        response = await client.post("/reserve", json={"event": str(event)})
 
     status = response.status_code
     assert status == HTTP_201_CREATED

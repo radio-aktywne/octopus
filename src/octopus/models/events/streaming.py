@@ -1,22 +1,27 @@
-from typing import Literal
+from typing import Literal, Self
+from uuid import UUID
 
 from pydantic import Field
 
-from octopus.models.base import SerializableModel, datamodel, serializable
+from octopus.models.base import SerializableModel
 from octopus.models.events import types as t
 from octopus.services.streaming import models as m
-from octopus.utils.time import naiveutcnow
+from octopus.utils.time import NaiveDatetime, naiveutcnow
 
 
-@serializable
-@datamodel
-class Availability(m.Availability):
+class Availability(SerializableModel):
     """Availability of a stream."""
 
+    event: UUID | None
+    """Identifier of the event that is currently being streamed."""
+
+    checked_at: NaiveDatetime
+    """Datetime in UTC at which the availability was checked."""
+
     @classmethod
-    def map(cls, availability: m.Availability) -> "Availability":
+    def map(cls, availability: m.Availability) -> Self:
         """Map to internal representation."""
-        return cls(**vars(availability))
+        return cls(event=availability.event, checked_at=availability.checked_at)
 
 
 class AvailabilityChangedEventData(SerializableModel):

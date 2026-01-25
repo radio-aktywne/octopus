@@ -19,37 +19,28 @@ class Service:
         try:
             yield
         except se.InstanceNotFoundError as ex:
-            raise e.ValidationError(str(ex)) from ex
+            raise e.ValidationError from ex
         except se.StreamBusyError as ex:
-            raise e.ServiceBusyError(str(ex)) from ex
+            raise e.ServiceBusyError from ex
         except se.BeaverError as ex:
-            raise e.BeaverError(str(ex)) from ex
+            raise e.BeaverError from ex
         except se.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def reserve(self, request: m.ReserveRequest) -> m.ReserveResponse:
         """Reserve a stream."""
-        event = request.data.event
-        fmt = request.data.format
-        record = request.data.record
-
-        req = sm.ReserveRequest(
-            event=event,
-            format=fmt,
-            record=record,
+        reserve_request = sm.ReserveRequest(
+            event=request.data.event,
+            format=request.data.format,
+            record=request.data.record,
         )
 
         with self._handle_errors():
-            res = await self._streaming.reserve(req)
+            reserve_response = await self._streaming.reserve(reserve_request)
 
-        credentials = res.credentials
-        port = res.port
-
-        credentials = m.Credentials.map(credentials)
-        data = m.ReserveResponseData(
-            credentials=credentials,
-            port=port,
-        )
         return m.ReserveResponse(
-            data=data,
+            reservation=m.Reservation(
+                credentials=m.Credentials.map(reserve_response.credentials),
+                port=reserve_response.port,
+            )
         )

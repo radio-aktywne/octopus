@@ -1,21 +1,18 @@
-import logging
-from collections.abc import AsyncGenerator, Callable, Sequence
-from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from importlib import metadata
+from collections.abc import Callable, Sequence
+from contextlib import AbstractAsyncContextManager
 from uuid import UUID
 
-from litestar import Litestar, Router
+from litestar import Litestar
 from litestar.channels import ChannelsPlugin
 from litestar.channels.backends.memory import MemoryChannelsBackend
 from litestar.openapi import OpenAPIConfig
-from litestar.openapi.plugins import ScalarRenderPlugin
 from litestar.plugins import PluginProtocol
-from litestar.plugins.pydantic import PydanticPlugin
 from pylocks.asyncio import AsyncioLock
-from pylocks.base import Lock
-from pystores.base import Store
 from pystores.memory import MemoryStore
 
+from octopus.api.lifespans import SuppressHTTPXLoggingLifespan, TestLifespan
+from octopus.api.openapi import OpenAPIConfigBuilder
+from octopus.api.plugins.pydantic import PydanticPlugin
 from octopus.api.routes.router import router
 from octopus.config.models import Config
 from octopus.services.beaver.service import BeaverService
@@ -33,104 +30,38 @@ class AppBuilder:
     def __init__(self, config: Config) -> None:
         self._config = config
 
-    def _get_route_handlers(self) -> Sequence[Router]:
-        return [router]
-
-    def _get_debug(self) -> bool:
-        return self._config.debug
-
-    @asynccontextmanager
-    async def _suppress_httpx_logging_lifespan(
-        self, app: Litestar
-    ) -> AsyncGenerator[None]:
-        logger = logging.getLogger("httpx")
-        disabled = logger.disabled
-        logger.disabled = True
-
-        try:
-            yield
-        finally:
-            logger.disabled = disabled
-
     def _build_lifespan(
         self,
     ) -> Sequence[Callable[[Litestar], AbstractAsyncContextManager]]:
         return [
-            self._suppress_httpx_logging_lifespan,
+            TestLifespan,
+            SuppressHTTPXLoggingLifespan,
         ]
 
     def _build_openapi_config(self) -> OpenAPIConfig:
-        return OpenAPIConfig(
-            title="octopus",
-            version=metadata.version("octopus"),
-            description="Broadcast streaming gate service 🚧",
-            use_handler_docstrings=True,
-            path="/openapi",
-            render_plugins=[
-                ScalarRenderPlugin(
-                    path="/openapi",
-                    options={
-                        "hideClientButton": True,
-                    },
-                ),
-            ],
-        )
-
-    def _build_channels_plugin(self) -> ChannelsPlugin:
-        return ChannelsPlugin(
-            # Store events in memory (good only for single instance services)
-            backend=MemoryChannelsBackend(),
-            # Channels to handle
-            channels=["events"],
-            # Don't allow channels outside of the list above
-            arbitrary_channels_allowed=False,
-        )
-
-    def _build_pydantic_plugin(self) -> PydanticPlugin:
-        return PydanticPlugin(
-            # Use aliases for serialization
-            prefer_alias=True,
-            # Allow type coercion
-            validate_strict=False,
-        )
+        return OpenAPIConfigBuilder().build()
 
     def _build_plugins(self) -> Sequence[PluginProtocol]:
         return [
-            self._build_channels_plugin(),
-            self._build_pydantic_plugin(),
+            ChannelsPlugin(backend=MemoryChannelsBackend(), channels=["events"]),
+            PydanticPlugin(),
         ]
 
-    def _build_beaver(self) -> BeaverService:
-        return BeaverService(
-            config=self._config.beaver,
-        )
-
-    def _build_store(self) -> Store[UUID | None]:
-        return MemoryStore[UUID | None](None)
-
-    def _build_lock(self) -> Lock:
-        return AsyncioLock()
-
     def _build_initial_state(self) -> State:
-        config = self._config
-        beaver = self._build_beaver()
-        store = self._build_store()
-        lock = self._build_lock()
-
         return State(
             {
-                "config": config,
-                "beaver": beaver,
-                "store": store,
-                "lock": lock,
+                "config": self._config,
+                "beaver": BeaverService(config=self._config.beaver),
+                "store": MemoryStore[UUID | None](None),
+                "lock": AsyncioLock(),
             }
         )
 
     def build(self) -> Litestar:
         """Build the app."""
         return Litestar(
-            route_handlers=self._get_route_handlers(),
-            debug=self._get_debug(),
+            route_handlers=[router],
+            debug=self._config.debug,
             lifespan=self._build_lifespan(),
             openapi_config=self._build_openapi_config(),
             plugins=self._build_plugins(),

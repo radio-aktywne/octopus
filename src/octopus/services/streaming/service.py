@@ -2,7 +2,6 @@ import asyncio
 import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
-from zoneinfo import ZoneInfo
 
 from litestar.channels import ChannelsPlugin
 from pylocks.base import Lock
@@ -40,10 +39,7 @@ class StreamingService:
         self._tasks = set[asyncio.Task]()
 
     def _create_availability(self, event: UUID | None) -> m.Availability:
-        return m.Availability(
-            event=event,
-            checked_at=naiveutcnow(),
-        )
+        return m.Availability(event=event, checked_at=naiveutcnow())
 
     def _get_reference_time(self) -> datetime:
         return naiveutcnow()
@@ -57,30 +53,23 @@ class StreamingService:
     async def _get_schedule(
         self, event: UUID, start: datetime, end: datetime
     ) -> bm.Schedule:
-        req = bm.ScheduleListRequest(
-            start=start,
-            end=end,
-            limit=None,
-            offset=None,
-            where={
-                "id": str(event),
-            },
-            include={
-                "show": True,
-            },
-            order=None,
+        schedule_list_request = bm.ScheduleListRequest(
+            start=start, end=end, where={"id": str(event)}, include={"show": True}
         )
 
         try:
-            res = await self._beaver.schedule.list(req)
+            schedule_list_response = await self._beaver.schedule.list(
+                schedule_list_request
+            )
         except be.ServiceError as ex:
-            raise e.BeaverError(str(ex)) from ex
-
-        results = res.results
-        schedules = results.schedules
+            raise e.BeaverError from ex
 
         schedule = next(
-            (schedule for schedule in schedules if schedule.event.id == event),
+            (
+                schedule
+                for schedule in schedule_list_response.results.schedules
+                if schedule.event.id == event
+            ),
             None,
         )
 
@@ -93,8 +82,7 @@ class StreamingService:
         self, reference: datetime, schedule: bm.Schedule
     ) -> bm.EventInstance:
         def _compare(instance: bm.EventInstance) -> timedelta:
-            tz = ZoneInfo(schedule.event.timezone)
-            start = instance.start.replace(tzinfo=tz)
+            start = instance.start.replace(tzinfo=schedule.event.timezone)
             start = start.astimezone(UTC).replace(tzinfo=None)
             return abs(start - reference)
 
@@ -113,27 +101,26 @@ class StreamingService:
 
     def _generate_credentials(self) -> m.Credentials:
         return m.Credentials(
-            token=self._generate_token(),
-            expires_at=self._get_token_expiry(),
+            token=self._generate_token(), expires_at=self._get_token_expiry()
         )
 
     def _get_port(self) -> int:
         return self._config.server.ports.srt
 
     def _emit_event(self, event: Event) -> None:
-        data = event.model_dump_json(by_alias=True)
+        data = event.model_dump_json(round_trip=True)
         self._channels.publish(data, "events")
 
     async def _emit_availability_changed_event(self, event_id: UUID | None) -> None:
-        availability = self._create_availability(event_id)
-        availability = ev.Availability.map(availability)
-        data = ev.AvailabilityChangedEventData(
-            availability=availability,
+        self._emit_event(
+            ev.AvailabilityChangedEvent(
+                data=ev.AvailabilityChangedEventData(
+                    availability=ev.Availability.map(
+                        self._create_availability(event_id)
+                    )
+                )
+            )
         )
-        event = ev.AvailabilityChangedEvent(
-            data=data,
-        )
-        self._emit_event(event)
 
     async def _reserve_event(self, event: bm.Event) -> None:
         async with self._lock:
@@ -185,22 +172,14 @@ class StreamingService:
         async with self._lock:
             event = await self._store.get()
 
-        availability = self._create_availability(event)
-
-        return m.CheckResponse(
-            availability=availability,
-        )
+        return m.CheckResponse(availability=self._create_availability(event))
 
     async def reserve(self, request: m.ReserveRequest) -> m.ReserveResponse:
         """Reserve a stream."""
-        event = request.event
-        fmt = request.format
-        record = request.record
-
         reference = self._get_reference_time()
         start, end = self._get_time_window(reference)
 
-        schedule = await self._get_schedule(event, start, end)
+        schedule = await self._get_schedule(request.event, start, end)
         event = schedule.event
         instance = self._find_nearest_instance(reference, schedule)
 
@@ -210,12 +189,16 @@ class StreamingService:
         await self._reserve_event(event)
 
         try:
-            await self._run(event, instance, credentials, port, fmt, record=record)
+            await self._run(
+                event,
+                instance,
+                credentials,
+                port,
+                request.format,
+                record=request.record,
+            )
         except:
             await self._free_event()
             raise
 
-        return m.ReserveResponse(
-            credentials=credentials,
-            port=port,
-        )
+        return m.ReserveResponse(credentials=credentials, port=port)
