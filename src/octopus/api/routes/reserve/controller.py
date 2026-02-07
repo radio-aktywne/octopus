@@ -12,7 +12,7 @@ from octopus.api.exceptions import ConflictException, UnprocessableContentExcept
 from octopus.api.routes.reserve import errors as e
 from octopus.api.routes.reserve import models as m
 from octopus.api.routes.reserve.service import Service
-from octopus.api.validator import Validator
+from octopus.models.base import Serializable
 from octopus.services.streaming.service import StreamingService
 from octopus.state import State
 
@@ -54,26 +54,20 @@ class Controller(BaseController):
         self,
         service: Service,
         data: Annotated[
-            m.ReserveRequestData,
+            Serializable[m.ReserveRequestData],
             Body(
-                description="Data for the request.",
+                description="Data for reserving a stream.",
             ),
         ],
-    ) -> Response[m.ReserveResponseData]:
+    ) -> Response[Serializable[m.ReserveResponseReservation]]:
         """Reserve a stream."""
-        parsed_data = Validator[m.ReserveRequestData].validate_object(data)
-
-        req = m.ReserveRequest(
-            data=parsed_data,
-        )
+        request = m.ReserveRequest(data=data.root)
 
         try:
-            res = await service.reserve(req)
+            response = await service.reserve(request)
         except e.ValidationError as ex:
             raise UnprocessableContentException from ex
         except e.ServiceBusyError as ex:
             raise ConflictException from ex
 
-        rdata = res.data
-
-        return Response(rdata)
+        return Response(Serializable(response.reservation))

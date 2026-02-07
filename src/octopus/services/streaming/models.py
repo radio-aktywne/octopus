@@ -19,7 +19,7 @@ class Availability:
     """Identifier of the event that is currently being streamed."""
 
     checked_at: datetime
-    """Time in UTC at which the availability was checked."""
+    """Datetime in UTC at which the availability was checked."""
 
 
 @datamodel
@@ -30,7 +30,7 @@ class Credentials:
     """Token to use to connect to the stream."""
 
     expires_at: datetime
-    """Time in UTC at which the token expires if not used."""
+    """Datetime in UTC at which the token expires if not used."""
 
 
 @datamodel

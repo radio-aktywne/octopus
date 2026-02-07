@@ -19,18 +19,15 @@ class Service:
         try:
             yield
         except se.ServiceError as ex:
-            raise e.ServiceError(str(ex)) from ex
+            raise e.ServiceError from ex
 
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
-        req = sm.CheckRequest()
+        check_request = sm.CheckRequest()
 
         with self._handle_errors():
-            res = await self._streaming.check(req)
+            check_response = await self._streaming.check(check_request)
 
-        availability = res.availability
-
-        availability = m.Availability.map(availability)
         return m.CheckResponse(
-            availability=availability,
+            availability=m.Availability.map(check_response.availability)
         )
