@@ -9,8 +9,8 @@ from pystores.base import Store
 from pystreams.base import Stream
 
 from octopus.config.models import Config
-from octopus.models.events import streaming as ev
-from octopus.models.events.event import Event
+from octopus.models.events import stream as ev
+from octopus.models.events.types import Event
 from octopus.services.beaver import errors as be
 from octopus.services.beaver import models as bm
 from octopus.services.beaver.service import BeaverService

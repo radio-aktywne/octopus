@@ -8,7 +8,7 @@ from litestar.di import Provide
 from litestar.params import Body
 from litestar.response import Response
 
-from octopus.api.exceptions import ConflictException, UnprocessableContentException
+from octopus.api.exceptions import BadRequestException, ConflictException
 from octopus.api.routes.reserve import errors as e
 from octopus.api.routes.reserve import models as m
 from octopus.api.routes.reserve.service import Service
@@ -45,10 +45,7 @@ class Controller(BaseController):
 
     @handlers.post(
         summary="Reserve a stream",
-        raises=[
-            ConflictException,
-            UnprocessableContentException,
-        ],
+        raises=[BadRequestException, ConflictException],
     )
     async def reserve(
         self,
@@ -66,7 +63,7 @@ class Controller(BaseController):
         try:
             response = await service.reserve(request)
         except e.ValidationError as ex:
-            raise UnprocessableContentException from ex
+            raise BadRequestException from ex
         except e.ServiceBusyError as ex:
             raise ConflictException from ex
 
