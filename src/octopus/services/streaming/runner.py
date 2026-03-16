@@ -77,7 +77,7 @@ class Runner:
     def _build_tee_gecko_output(
         self, event: bm.Event, instance: bm.EventInstance, fmt: m.Format
     ) -> FFmpegNode:
-        target = f"{self._config.gecko.http.url}/records/{event.id}/{isostringify(instance.start)}"
+        target = f"{self._config.gecko.http.url}/recordings/{event.id}/{isostringify(instance.start)}"
 
         return FFmpegNode(
             target=target,
