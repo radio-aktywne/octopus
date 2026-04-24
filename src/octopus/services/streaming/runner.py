@@ -42,11 +42,14 @@ class Runner:
         return [f"{key}={value}" for key, value in metadata.items()]
 
     def _build_metadata(
-        self, event: bm.Event, instance: bm.EventInstance
+        self,
+        event: bm.Event,
+        instance: bm.EventInstance,
+        metadata: Mapping[str, str] | None,
     ) -> Sequence[str]:
-        metadata = {}
+        metadata = dict(metadata or {})
 
-        if event.show is not None:
+        if "title" not in metadata and event.show is not None:
             metadata["title"] = event.show.title
 
         return self._build_ffmpeg_metadata_options(metadata)
@@ -101,13 +104,14 @@ class Runner:
         event: bm.Event,
         instance: bm.EventInstance,
         fmt: m.Format,
+        metadata: Mapping[str, str] | None,
         *,
         record: bool,
     ) -> FFmpegNode:
         options = {
             "acodec": "copy",
             "map": "0:a",
-            "metadata": self._build_metadata(event, instance),
+            "metadata": self._build_metadata(event, instance, metadata),
         }
 
         if not record:
@@ -142,12 +146,13 @@ class Runner:
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
+        metadata: Mapping[str, str] | None,
         *,
         record: bool,
     ) -> ProcessBasedStreamMetadata:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
-            output=self._build_output(event, instance, fmt, record=record),
+            output=self._build_output(event, instance, fmt, metadata, record=record),
         )
 
     async def _run_stream(self, metadata: ProcessBasedStreamMetadata) -> Stream:
@@ -160,11 +165,12 @@ class Runner:
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
+        metadata: Mapping[str, str] | None,
         *,
         record: bool,
     ) -> Stream:
         """Run the stream."""
-        metadata = self._build_stream_metadata(
-            event, instance, credentials, port, fmt, record=record
+        meta = self._build_stream_metadata(
+            event, instance, credentials, port, fmt, metadata, record=record
         )
-        return await self._run_stream(metadata)
+        return await self._run_stream(meta)

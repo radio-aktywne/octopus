@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from typing import Self
 from uuid import UUID
 
@@ -32,6 +33,9 @@ class ReservationInput(SerializableModel):
 
     record: bool = False
     """Whether to record the stream."""
+
+    metadata: Mapping[str, str] | None = None
+    """Metadata to attach to the stream."""
 
 
 class Reservation(SerializableModel):

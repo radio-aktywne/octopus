@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
@@ -58,6 +59,9 @@ class ReserveRequest:
 
     record: bool
     """Whether to record the stream."""
+
+    metadata: Mapping[str, str] | None
+    """Metadata to attach to the stream."""
 
 
 @datamodel
