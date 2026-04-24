@@ -27,11 +27,14 @@ class Runner:
         return FFmpegNode(
             target=target,
             options={
-                "mode": "listener",
                 "listen_timeout": timeout,
+                "mode": "listener",
                 "passphrase": credentials.token,
             },
         )
+
+    def _build_ffmpeg_fifo_options(self, options: Mapping[str, str]) -> str:
+        return "\\:".join(f"{key}={value}" for key, value in options.items())
 
     def _build_ffmpeg_metadata_options(
         self, metadata: Mapping[str, str]
@@ -58,34 +61,35 @@ class Runner:
             case m.Format.OGG:
                 return "audio/ogg"
 
-    def _build_dingo_output(self, fmt: m.Format, metadata: Sequence[str]) -> FFmpegNode:
+    def _build_dingo_output(
+        self, fmt: m.Format, *, options: Mapping[str, str] | None = None
+    ) -> FFmpegNode:
         return FFmpegNode(
             target=self._config.dingo.srt.url,
             options={
-                "acodec": "copy",
+                **(options or {}),
                 "f": self._map_format(fmt),
-                "metadata": metadata,
+                "mode": "caller",
             },
         )
 
-    def _build_tee_dingo_output(self, fmt: m.Format) -> FFmpegNode:
-        return FFmpegNode(
-            target=self._config.dingo.srt.url,
-            options={"f": self._map_format(fmt)},
-        )
-
-    def _build_tee_gecko_output(
-        self, event: bm.Event, instance: bm.EventInstance, fmt: m.Format
+    def _build_gecko_output(
+        self,
+        event: bm.Event,
+        instance: bm.EventInstance,
+        fmt: m.Format,
+        *,
+        options: Mapping[str, str] | None = None,
     ) -> FFmpegNode:
         target = f"{self._config.gecko.http.url}/recordings/{event.id}/{isostringify(instance.start)}"
 
         return FFmpegNode(
             target=target,
             options={
-                "f": self._map_format(fmt),
+                **(options or {}),
                 "content_type": self._map_content_type(fmt),
+                "f": self._map_format(fmt),
                 "method": "PUT",
-                "onfail": "ignore",
             },
         )
 
@@ -97,17 +101,35 @@ class Runner:
         *,
         record: bool,
     ) -> FFmpegNode:
-        metadata = self._build_metadata(event, instance)
+        options = {
+            "acodec": "copy",
+            "map": "0:a",
+            "metadata": self._build_metadata(event, instance),
+        }
 
         if not record:
-            return self._build_dingo_output(fmt, metadata)
+            return self._build_dingo_output(fmt, options=options)
 
         return FFmpegTeeNode(
             nodes=[
-                self._build_tee_dingo_output(fmt),
-                self._build_tee_gecko_output(event, instance, fmt),
+                self._build_dingo_output(fmt),
+                self._build_gecko_output(
+                    event,
+                    instance,
+                    fmt,
+                    options={
+                        "fifo_options": self._build_ffmpeg_fifo_options(
+                            {
+                                "drop_pkts_on_overflow": "1",
+                                "queue_size": "1024",
+                            }
+                        ),
+                        "onfail": "ignore",
+                        "use_fifo": "1",
+                    },
+                ),
             ],
-            options={"acodec": "copy", "map": 0, "metadata": metadata},
+            options=options,
         )
 
     def _build_stream_metadata(  # noqa: PLR0913
