@@ -1,5 +1,6 @@
 import asyncio
 import secrets
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -150,6 +151,7 @@ class StreamingService:
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
+        metadata: Mapping[str, str] | None,
         *,
         record: bool,
     ) -> None:
@@ -160,6 +162,7 @@ class StreamingService:
             credentials=credentials,
             port=port,
             fmt=fmt,
+            metadata=metadata,
             record=record,
         )
 
@@ -195,6 +198,7 @@ class StreamingService:
                 credentials,
                 port,
                 request.format,
+                request.metadata,
                 record=request.record,
             )
         except:

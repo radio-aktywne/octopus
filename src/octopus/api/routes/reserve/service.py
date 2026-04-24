@@ -33,6 +33,7 @@ class Service:
             event=request.data.event,
             format=request.data.format,
             record=request.data.record,
+            metadata=request.data.metadata,
         )
 
         with self._handle_errors():
