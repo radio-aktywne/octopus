@@ -12,6 +12,13 @@ class InstanceNotFoundError(ServiceError):
         super().__init__(f"No near instances of event {event_id} found.")
 
 
+class UnrecordableEventError(ServiceError):
+    """Raised when an event is not recordable."""
+
+    def __init__(self, event_id: UUID) -> None:
+        super().__init__(f"Event {event_id} is not recordable.")
+
+
 class StreamBusyError(ServiceError):
     """Raised when another stream is already being handled at the moment."""
 

@@ -20,6 +20,8 @@ class Service:
             yield
         except se.InstanceNotFoundError as ex:
             raise e.ValidationError from ex
+        except se.UnrecordableEventError as ex:
+            raise e.ValidationError from ex
         except se.StreamBusyError as ex:
             raise e.ServiceBusyError from ex
         except se.BeaverError as ex:
