@@ -184,6 +184,10 @@ class StreamingService:
 
         schedule = await self._get_schedule(request.event, start, end)
         event = schedule.event
+
+        if request.record and event.type != bm.EventType.live:
+            raise e.UnrecordableEventError(event.id)
+
         instance = self._find_nearest_instance(reference, schedule)
 
         credentials = self._generate_credentials()

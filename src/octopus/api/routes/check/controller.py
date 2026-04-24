@@ -16,7 +16,7 @@ from octopus.state import State
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(self, state: State, channels: ChannelsPlugin) -> Service:
+    async def _build_service(self, channels: ChannelsPlugin, state: State) -> Service:
         return Service(
             streaming=StreamingService(
                 config=state.config,
