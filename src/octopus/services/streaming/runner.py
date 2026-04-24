@@ -64,11 +64,14 @@ class Runner:
     def _build_dingo_output(
         self, fmt: m.Format, *, options: Mapping[str, str] | None = None
     ) -> FFmpegNode:
+        latency = ceil(self._config.streaming.latency.total_seconds() * 1000000)
+
         return FFmpegNode(
             target=self._config.dingo.srt.url,
             options={
                 **(options or {}),
                 "f": self._map_format(fmt),
+                "latency": latency,
                 "mode": "caller",
             },
         )

@@ -128,7 +128,14 @@ class ServerConfig(BaseModel):
 class StreamingConfig(BaseModel):
     """Configuration for the streaming service."""
 
-    timeout: timedelta = Field(default=timedelta(minutes=1), ge=0)
+    latency: timedelta = Field(
+        default=timedelta(milliseconds=200),
+        ge=timedelta(milliseconds=20),
+        le=timedelta(milliseconds=8000),
+    )
+    """Target latency for buffering outgoing stream."""
+
+    timeout: timedelta = Field(default=timedelta(minutes=1), ge=timedelta())
     """Time after which a stream will be stopped if no connections are made."""
 
     window: timedelta = timedelta(hours=1)

@@ -52,9 +52,12 @@ You can configure the service at runtime using various environment variables:
 - `OCTOPUS__SERVER__TRUSTED` -
   trusted IP addresses
   (default: `*`)
-- `OCTOPUS__STREAM__TIMEOUT` -
+- `OCTOPUS__STREAMING__LATENCY` -
+  target latency for buffering outgoing stream
+  (default: `PT0.2S`)
+- `OCTOPUS__STREAMING__TIMEOUT` -
   time after which a stream will be stopped if no connections are made
   (default: `PT1M`)
-- `OCTOPUS__STREAM__WINDOW` -
+- `OCTOPUS__STREAMING__WINDOW` -
   time window to search for event instances around the current time
   (default: `PT1H`)
