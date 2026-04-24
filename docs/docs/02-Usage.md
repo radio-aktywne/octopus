@@ -37,39 +37,24 @@ curl \
     http://localhost:10300/reserve
 ```
 
-You should receive a response containing the credentials and port number
-that you can use to connect to the stream and start sending audio.
-The credentials are only valid for a limited time.
+You should receive a response containing the credentials
+that you need to use to connect to the stream within a limited time.
 
 ## Sending audio
 
-You can send audio to record using the
+You can send live audio using the
 [`SRT`](https://www.haivision.com/products/srt-secure-reliable-transport)
 protocol.
 
-As the audio codec and container,
-by default you should use [`Opus`](https://opus-codec.org) and
-[`Ogg`](https://www.xiph.org/ogg) respectively.
-They are free and open source, focused on quality and efficiency,
-and support embedding metadata into the stream.
+You need to use a supported audio container format,
+which is currently limited to [`Ogg`](https://www.xiph.org/ogg).
+You can use any audio codec supported by that container format,
+but we recommend using [`Opus`](https://opus-codec.org).
 
-Remember to use the token and port you received in the previous step
+Remember to use the credentials you received in the previous step
 to connect to the stream.
 
-For example, you can use [`Liquidsoap`](https://www.liquidsoap.info) for that:
-
-```sh
-liquidsoap \
-    'output.srt(
-        host="127.0.0.1",
-        port=10300,
-        passphrase="XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-        %ogg(%opus),
-        sine()
-    )'
-```
-
-Alternatively, you can use [`ffmpeg`](https://ffmpeg.org) to do the same:
+For example, you can use [`ffmpeg`](https://ffmpeg.org) for that:
 
 ```sh
 ffmpeg \
@@ -78,7 +63,10 @@ ffmpeg \
     -i sine \
     -c libopus \
     -f ogg \
-    -passphrase "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+    -ar 48000 \
+    -b:a 256k \
+    -metadata title=test \
+    -passphrase XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \
     srt://127.0.0.1:10300
 ```
 

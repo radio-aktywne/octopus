@@ -80,7 +80,6 @@ async def test_post(
 
     data = response.json()
     assert "credentials" in data
-    assert "port" in data
 
     credentials = data["credentials"]
     assert "token" in credentials
@@ -93,6 +92,3 @@ async def test_post(
     expires_at = credentials["expiresAt"]
     assert isinstance(expires_at, str)
     assert datetime.fromisoformat(expires_at)
-
-    port = data["port"]
-    assert isinstance(port, int)

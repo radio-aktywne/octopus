@@ -201,4 +201,4 @@ class StreamingService:
             await self._free_event()
             raise
 
-        return m.ReserveResponse(credentials=credentials, port=port)
+        return m.ReserveResponse(credentials=credentials)
