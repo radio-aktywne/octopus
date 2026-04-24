@@ -40,7 +40,6 @@ class Service:
 
         return m.ReserveResponse(
             reservation=m.Reservation(
-                credentials=m.Credentials.map(reserve_response.credentials),
-                port=reserve_response.port,
+                credentials=m.Credentials.map(reserve_response.credentials)
             )
         )

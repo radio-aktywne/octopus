@@ -1,7 +1,5 @@
-from typing import Annotated, Self
+from typing import Self
 from uuid import UUID
-
-from pydantic import Field
 
 from octopus.models.base import SerializableModel, datamodel
 from octopus.services.streaming import models as sm
@@ -41,9 +39,6 @@ class Reservation(SerializableModel):
 
     credentials: Credentials
     """Credentials to use to connect to the stream."""
-
-    port: Annotated[int, Field(ge=1, le=65535)]
-    """Port to use to connect to the stream."""
 
 
 type ReserveRequestData = ReservationInput

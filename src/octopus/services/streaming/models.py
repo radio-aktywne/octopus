@@ -66,6 +66,3 @@ class ReserveResponse:
 
     credentials: Credentials
     """Credentials to use to connect to the stream."""
-
-    port: int
-    """Port to use to connect to the stream."""
