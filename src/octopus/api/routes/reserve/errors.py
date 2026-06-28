@@ -6,9 +6,5 @@ class ValidationError(ServiceError):
     """Raised when a validation error occurs."""
 
 
-class ServiceBusyError(ServiceError):
-    """Raised when the service is busy."""
-
-
-class BeaverError(ServiceError):
-    """Raised when an beaver service operation fails."""
+class ConflictError(ValidationError):
+    """Raised when a conflict error occurs."""

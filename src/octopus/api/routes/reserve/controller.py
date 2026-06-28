@@ -62,9 +62,9 @@ class Controller(BaseController):
 
         try:
             response = await service.reserve(request)
+        except e.ConflictError as ex:
+            raise ConflictException from ex
         except e.ValidationError as ex:
             raise BadRequestException from ex
-        except e.ServiceBusyError as ex:
-            raise ConflictException from ex
 
         return Response(Serializable(response.reservation))
