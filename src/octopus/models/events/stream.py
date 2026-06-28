@@ -7,7 +7,7 @@ from octopus.models.base import SerializableModel
 from octopus.models.events.enums import EventType
 from octopus.models.events.fields import CreatedAtField, DataField, TypeField
 from octopus.services.streaming import models as sm
-from octopus.utils.time import NaiveDatetime, naiveutcnow
+from octopus.utils.time import UTCDatetime, awareutcnow
 
 
 class Availability(SerializableModel):
@@ -16,12 +16,12 @@ class Availability(SerializableModel):
     event: UUID | None
     """Identifier of the event that is currently being streamed."""
 
-    checked_at: NaiveDatetime
+    checked_at: UTCDatetime
     """Datetime in UTC at which the availability was checked."""
 
     @classmethod
     def map(cls, availability: sm.Availability) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(event=availability.event, checked_at=availability.checked_at)
 
 
@@ -38,5 +38,5 @@ class AvailabilityChangedEvent(SerializableModel):
     type: TypeField[Literal[EventType.AVAILABILITY_CHANGED]] = (
         EventType.AVAILABILITY_CHANGED
     )
-    created_at: CreatedAtField = Field(default_factory=naiveutcnow)
+    created_at: CreatedAtField = Field(default_factory=awareutcnow)
     data: DataField[AvailabilityChangedEventData]

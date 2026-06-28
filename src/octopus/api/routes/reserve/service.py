@@ -23,9 +23,7 @@ class Service:
         except se.UnrecordableEventError as ex:
             raise e.ValidationError from ex
         except se.StreamBusyError as ex:
-            raise e.ServiceBusyError from ex
-        except se.BeaverError as ex:
-            raise e.BeaverError from ex
+            raise e.ConflictError from ex
         except se.ServiceError as ex:
             raise e.ServiceError from ex
 

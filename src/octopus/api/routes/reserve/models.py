@@ -4,7 +4,7 @@ from uuid import UUID
 
 from octopus.models.base import SerializableModel, datamodel
 from octopus.services.streaming import models as sm
-from octopus.utils.time import NaiveDatetime
+from octopus.utils.time import UTCDatetime
 
 
 class Credentials(SerializableModel):
@@ -13,12 +13,12 @@ class Credentials(SerializableModel):
     token: str
     """Token to use to connect to the stream."""
 
-    expires_at: NaiveDatetime
+    expires_at: UTCDatetime
     """Datetime in UTC at which the token expires if not used."""
 
     @classmethod
     def map(cls, credentials: sm.Credentials) -> Self:
-        """Map to internal representation."""
+        """Map from internal representation."""
         return cls(token=credentials.token, expires_at=credentials.expires_at)
 
 

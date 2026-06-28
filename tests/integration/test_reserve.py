@@ -1,6 +1,6 @@
 from collections.abc import AsyncGenerator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest
@@ -8,6 +8,8 @@ import pytest_asyncio
 from httpx import AsyncClient
 from litestar.status_codes import HTTP_201_CREATED
 from litestar.testing import AsyncTestClient
+
+from octopus.utils.time import isostringify, naiveutcnow
 
 
 @pytest_asyncio.fixture(loop_scope="session")
@@ -41,16 +43,13 @@ async def event_manager(
     @asynccontextmanager
     async def _setup_event() -> AsyncGenerator[UUID]:
         async with show_manager as show:
-            start = datetime.now(UTC).replace(tzinfo=None)
-            end = start + timedelta(hours=1)
-
             response = await beaver_client.post(
                 "/events",
                 json={
                     "type": "live",
                     "showId": str(show),
-                    "start": start.isoformat(),
-                    "end": end.isoformat(),
+                    "start": isostringify(naiveutcnow()),
+                    "duration": "PT1H",
                     "timezone": str(UTC),
                 },
             )

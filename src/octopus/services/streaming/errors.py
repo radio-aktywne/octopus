@@ -26,7 +26,3 @@ class StreamBusyError(ServiceError):
         super().__init__(
             f"Another stream is already being handled for event {event_id}."
         )
-
-
-class BeaverError(ServiceError):
-    """Raised when an beaver service operation fails."""

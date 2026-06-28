@@ -6,9 +6,10 @@ from pystreams.ffmpeg import FFmpegNode, FFmpegStreamMetadata, FFmpegTeeNode
 from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetadata
 
 from octopus.config.models import Config
-from octopus.services.beaver import models as bm
+from octopus.services.apis.beaver import models as bm
+from octopus.services.streaming import errors as e
 from octopus.services.streaming import models as m
-from octopus.utils.time import isostringify, naiveutcnow
+from octopus.utils.time import awareutcnow, isostringify
 
 
 class Runner:
@@ -18,7 +19,7 @@ class Runner:
         self._config = config
 
     def _build_input(self, credentials: m.Credentials, port: int) -> FFmpegNode:
-        timeout = credentials.expires_at - naiveutcnow()
+        timeout = credentials.expires_at - awareutcnow()
         timeout = ceil(timeout.total_seconds() * 1000000)
         timeout = max(timeout, 0)
 
@@ -43,14 +44,17 @@ class Runner:
 
     def _build_metadata(
         self,
-        event: bm.Event,
-        instance: bm.EventInstance,
+        instance: bm.Instance,
         metadata: Mapping[str, str] | None,
     ) -> Sequence[str]:
         metadata = dict(metadata or {})
 
-        if "title" not in metadata and event.show is not None:
-            metadata["title"] = event.show.title
+        if (
+            "title" not in metadata
+            and instance.event is not None
+            and instance.event.show is not None
+        ):
+            metadata["title"] = instance.event.show.title
 
         return self._build_ffmpeg_metadata_options(metadata)
 
@@ -81,13 +85,15 @@ class Runner:
 
     def _build_gecko_output(
         self,
-        event: bm.Event,
-        instance: bm.EventInstance,
+        instance: bm.Instance,
         fmt: m.Format,
         *,
         options: Mapping[str, str] | None = None,
     ) -> FFmpegNode:
-        target = f"{self._config.gecko.http.url}/recordings/{event.id}/{isostringify(instance.start)}"
+        if instance.event is None:
+            raise e.ServiceError
+
+        target = f"{self._config.gecko.http.url}/recordings/{instance.event.id}/{isostringify(instance.start)}"
 
         return FFmpegNode(
             target=target,
@@ -101,8 +107,7 @@ class Runner:
 
     def _build_output(
         self,
-        event: bm.Event,
-        instance: bm.EventInstance,
+        instance: bm.Instance,
         fmt: m.Format,
         metadata: Mapping[str, str] | None,
         *,
@@ -111,7 +116,7 @@ class Runner:
         options = {
             "acodec": "copy",
             "map": "0:a",
-            "metadata": self._build_metadata(event, instance, metadata),
+            "metadata": self._build_metadata(instance, metadata),
         }
 
         if not record:
@@ -121,7 +126,6 @@ class Runner:
             nodes=[
                 self._build_dingo_output(fmt),
                 self._build_gecko_output(
-                    event,
                     instance,
                     fmt,
                     options={
@@ -141,8 +145,7 @@ class Runner:
 
     def _build_stream_metadata(  # noqa: PLR0913
         self,
-        event: bm.Event,
-        instance: bm.EventInstance,
+        instance: bm.Instance,
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
@@ -152,7 +155,7 @@ class Runner:
     ) -> ProcessBasedStreamMetadata:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
-            output=self._build_output(event, instance, fmt, metadata, record=record),
+            output=self._build_output(instance, fmt, metadata, record=record),
         )
 
     async def _run_stream(self, metadata: ProcessBasedStreamMetadata) -> Stream:
@@ -160,8 +163,7 @@ class Runner:
 
     async def run(  # noqa: PLR0913
         self,
-        event: bm.Event,
-        instance: bm.EventInstance,
+        instance: bm.Instance,
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
@@ -171,6 +173,6 @@ class Runner:
     ) -> Stream:
         """Run the stream."""
         meta = self._build_stream_metadata(
-            event, instance, credentials, port, fmt, metadata, record=record
+            instance, credentials, port, fmt, metadata, record=record
         )
         return await self._run_stream(meta)

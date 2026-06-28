@@ -1,0 +1,90 @@
+from collections.abc import Mapping
+from http import HTTPMethod
+from typing import Any
+
+from httpx import AsyncClient, HTTPError, HTTPStatusError, Response
+from pydantic import TypeAdapter
+
+from octopus.config.models import BeaverConfig, BeaverHTTPConfig
+from octopus.services.apis.beaver import errors as e
+from octopus.services.apis.beaver import models as m
+
+
+class BeaverClient:
+    """Client for beaver API."""
+
+    def __init__(self, config: BeaverHTTPConfig) -> None:
+        self.config = config
+
+    async def request(
+        self,
+        method: HTTPMethod,
+        path: str,
+        *,
+        data: Any | None = None,
+        params: Mapping[str, str] | None = None,
+        headers: Mapping[str, str] | None = None,
+    ) -> Response:
+        """Make a request and return the response."""
+        try:
+            async with AsyncClient(base_url=self.config.url) as client:
+                return await client.request(
+                    method,
+                    path,
+                    json=data,
+                    params=params,
+                    headers=headers,
+                )
+        except HTTPError as ex:
+            raise e.ServiceError from ex
+
+
+class BeaverInstancesService:
+    """Service for instances in beaver API."""
+
+    def __init__(self, client: BeaverClient) -> None:
+        self.client = client
+
+    def _dump(self, value: Any, type: Any) -> Any:  # noqa: A002
+        return TypeAdapter(type).dump_python(value, mode="json", round_trip=True)
+
+    def _dump_json(self, value: Any, type: Any) -> str:  # noqa: A002
+        return TypeAdapter(type).dump_json(value, round_trip=True).decode()
+
+    async def list(self, request: m.InstancesListRequest) -> m.InstancesListResponse:
+        """List instances."""
+        start = self._dump_json(request.start, m.InstancesListRequestStart)
+        end = self._dump_json(request.end, m.InstancesListRequestEnd)
+        params = {"start": start, "end": end}
+
+        if request.where is not None:
+            where = self._dump_json(request.where, m.InstancesListRequestWhere)
+            params["where"] = where
+
+        if request.include is not None:
+            include = self._dump_json(request.include, m.InstancesListRequestInclude)
+            params["include"] = include
+
+        response = await self.client.request(
+            HTTPMethod.GET, "/instances", params=params
+        )
+
+        try:
+            response.raise_for_status()
+        except HTTPStatusError as ex:
+            raise e.ServiceError from ex
+
+        results = m.InstanceList.model_validate_json(response.content)
+        return m.InstancesListResponse(results=results)
+
+
+class BeaverService:
+    """Service for beaver API."""
+
+    def __init__(self, config: BeaverConfig) -> None:
+        self.client = BeaverClient(config.http)
+
+    @property
+    def instances(self) -> BeaverInstancesService:
+        """Service for instances in beaver API."""
+        return BeaverInstancesService(self.client)

@@ -1,6 +1,6 @@
 import asyncio
 import secrets
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -12,13 +12,13 @@ from pystreams.base import Stream
 from octopus.config.models import Config
 from octopus.models.events import stream as ev
 from octopus.models.events.types import Event
-from octopus.services.beaver import errors as be
-from octopus.services.beaver import models as bm
-from octopus.services.beaver.service import BeaverService
+from octopus.services.apis.beaver import errors as be
+from octopus.services.apis.beaver import models as bm
+from octopus.services.apis.beaver.service import BeaverService
 from octopus.services.streaming import errors as e
 from octopus.services.streaming import models as m
 from octopus.services.streaming.runner import Runner
-from octopus.utils.time import naiveutcnow
+from octopus.utils.time import awareutcnow
 
 
 class StreamingService:
@@ -39,11 +39,11 @@ class StreamingService:
         self._channels = channels
         self._tasks = set[asyncio.Task]()
 
-    def _create_availability(self, event: UUID | None) -> m.Availability:
-        return m.Availability(event=event, checked_at=naiveutcnow())
+    def _create_availability(self, event_id: UUID | None) -> m.Availability:
+        return m.Availability(event=event_id, checked_at=awareutcnow())
 
     def _get_reference_time(self) -> datetime:
-        return naiveutcnow()
+        return awareutcnow()
 
     def _get_time_window(self, reference: datetime) -> tuple[datetime, datetime]:
         start = reference - self._config.streaming.window
@@ -51,46 +51,40 @@ class StreamingService:
 
         return start, end
 
-    async def _get_schedule(
-        self, event: UUID, start: datetime, end: datetime
-    ) -> bm.Schedule:
-        schedule_list_request = bm.ScheduleListRequest(
-            start=start, end=end, where={"id": str(event)}, include={"show": True}
+    async def _get_instances(
+        self, event_id: UUID, start: datetime, end: datetime
+    ) -> Sequence[bm.Instance]:
+        instances_list_request = bm.InstancesListRequest(
+            start=start,
+            end=end,
+            where={"event": {"is": {"id": event_id}}},
+            include={"event": {"include": {"show": True}}},
         )
 
         try:
-            schedule_list_response = await self._beaver.schedule.list(
-                schedule_list_request
+            instances_list_response = await self._beaver.instances.list(
+                instances_list_request
             )
         except be.ServiceError as ex:
-            raise e.BeaverError from ex
+            raise e.ServiceError from ex
 
-        schedule = next(
-            (
-                schedule
-                for schedule in schedule_list_response.results.schedules
-                if schedule.event.id == event
-            ),
-            None,
-        )
-
-        if schedule is None:
-            raise e.InstanceNotFoundError(event)
-
-        return schedule
+        return instances_list_response.results.instances
 
     def _find_nearest_instance(
-        self, reference: datetime, schedule: bm.Schedule
-    ) -> bm.EventInstance:
-        def _compare(instance: bm.EventInstance) -> timedelta:
-            start = instance.start.replace(tzinfo=schedule.event.timezone)
-            start = start.astimezone(UTC).replace(tzinfo=None)
+        self, event_id: UUID, reference: datetime, instances: Sequence[bm.Instance]
+    ) -> bm.Instance:
+        def _compare(instance: bm.Instance) -> timedelta:
+            if instance.event is None:
+                raise e.ServiceError
+
+            start = instance.start.replace(tzinfo=instance.event.timezone)
+            start = start.astimezone(UTC)
             return abs(start - reference)
 
-        instance = min(schedule.instances, key=_compare, default=None)
+        instance = min(instances, key=_compare, default=None)
 
         if instance is None:
-            raise e.InstanceNotFoundError(schedule.event.id)
+            raise e.InstanceNotFoundError(event_id)
 
         return instance
 
@@ -98,7 +92,7 @@ class StreamingService:
         return secrets.token_hex(16)
 
     def _get_token_expiry(self) -> datetime:
-        return naiveutcnow() + self._config.streaming.timeout
+        return awareutcnow() + self._config.streaming.timeout
 
     def _generate_credentials(self) -> m.Credentials:
         return m.Credentials(
@@ -146,8 +140,7 @@ class StreamingService:
 
     async def _run(  # noqa: PLR0913
         self,
-        event: bm.Event,
-        instance: bm.EventInstance,
+        instance: bm.Instance,
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
@@ -157,7 +150,6 @@ class StreamingService:
     ) -> None:
         runner = Runner(self._config)
         stream = await runner.run(
-            event=event,
             instance=instance,
             credentials=credentials,
             port=port,
@@ -182,22 +174,22 @@ class StreamingService:
         reference = self._get_reference_time()
         start, end = self._get_time_window(reference)
 
-        schedule = await self._get_schedule(request.event, start, end)
-        event = schedule.event
+        instances = await self._get_instances(request.event, start, end)
+        instance = self._find_nearest_instance(request.event, reference, instances)
 
-        if request.record and event.type != bm.EventType.live:
-            raise e.UnrecordableEventError(event.id)
+        if instance.event is None:
+            raise e.ServiceError
 
-        instance = self._find_nearest_instance(reference, schedule)
+        if request.record and instance.event.type != bm.EventType.live:
+            raise e.UnrecordableEventError(instance.event.id)
 
         credentials = self._generate_credentials()
         port = self._get_port()
 
-        await self._reserve_event(event)
+        await self._reserve_event(instance.event)
 
         try:
             await self._run(
-                event,
                 instance,
                 credentials,
                 port,

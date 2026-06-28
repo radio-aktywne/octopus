@@ -5,6 +5,7 @@ from socket import gethostbyname
 from pydantic import BaseModel, Field
 
 from octopus.config.base import BaseConfig
+from octopus.utils.time import Timedelta
 
 
 class BeaverHTTPConfig(BaseModel):
@@ -128,17 +129,17 @@ class ServerConfig(BaseModel):
 class StreamingConfig(BaseModel):
     """Configuration for the streaming service."""
 
-    latency: timedelta = Field(
+    latency: Timedelta = Field(
         default=timedelta(milliseconds=200),
         ge=timedelta(milliseconds=20),
         le=timedelta(milliseconds=8000),
     )
     """Target latency for buffering outgoing stream."""
 
-    timeout: timedelta = Field(default=timedelta(minutes=1), ge=timedelta())
+    timeout: Timedelta = Field(default=timedelta(minutes=1), ge=timedelta())
     """Time after which a stream will be stopped if no connections are made."""
 
-    window: timedelta = timedelta(hours=1)
+    window: Timedelta = Field(default=timedelta(hours=1), ge=timedelta())
     """Time window to search for event instances around the current time."""
 
 
