@@ -3,9 +3,9 @@ from http import HTTPMethod
 from typing import Any
 
 from httpx import AsyncClient, HTTPError, HTTPStatusError, Response
-from pydantic import TypeAdapter
 
 from octopus.config.models import BeaverConfig, BeaverHTTPConfig
+from octopus.models.base import Jsonable, Serializable
 from octopus.services.apis.beaver import errors as e
 from octopus.services.apis.beaver import models as m
 
@@ -45,24 +45,28 @@ class BeaverInstancesService:
     def __init__(self, client: BeaverClient) -> None:
         self.client = client
 
-    def _dump(self, value: Any, type: Any) -> Any:  # noqa: A002
-        return TypeAdapter(type).dump_python(value, mode="json", round_trip=True)
+    def _dump(self, value: Serializable) -> Any:
+        return value.model_dump(mode="json", round_trip=True)
 
-    def _dump_json(self, value: Any, type: Any) -> str:  # noqa: A002
-        return TypeAdapter(type).dump_json(value, round_trip=True).decode()
+    def _dump_json(self, value: Jsonable) -> str:
+        return value.model_dump_json(round_trip=True)
 
     async def list(self, request: m.InstancesListRequest) -> m.InstancesListResponse:
         """List instances."""
-        start = self._dump_json(request.start, m.InstancesListRequestStart)
-        end = self._dump_json(request.end, m.InstancesListRequestEnd)
+        start = self._dump_json(Jsonable[m.InstancesListRequestStart](request.start))
+        end = self._dump_json(Jsonable[m.InstancesListRequestEnd](request.end))
         params = {"start": start, "end": end}
 
         if request.where is not None:
-            where = self._dump_json(request.where, m.InstancesListRequestWhere)
+            where = self._dump_json(
+                Jsonable[m.InstancesListRequestWhere](request.where)
+            )
             params["where"] = where
 
         if request.include is not None:
-            include = self._dump_json(request.include, m.InstancesListRequestInclude)
+            include = self._dump_json(
+                Jsonable[m.InstancesListRequestInclude](request.include)
+            )
             params["include"] = include
 
         response = await self.client.request(
