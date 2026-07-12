@@ -1,8 +1,6 @@
 import asyncio
 import secrets
-from collections.abc import Mapping, Sequence
-from datetime import UTC, datetime, timedelta
-from uuid import UUID
+from collections.abc import Mapping
 
 from litestar.channels import ChannelsPlugin
 from pylocks.base import Lock
@@ -27,7 +25,7 @@ class StreamingService:
     def __init__(
         self,
         config: Config,
-        store: Store[UUID | None],
+        store: Store[m.Instance | None],
         lock: Lock,
         beaver: BeaverService,
         channels: ChannelsPlugin,
@@ -39,98 +37,65 @@ class StreamingService:
         self._channels = channels
         self._tasks = set[asyncio.Task]()
 
-    def _create_availability(self, event_id: UUID | None) -> m.Availability:
-        return m.Availability(event=event_id, checked_at=awareutcnow())
-
-    def _get_reference_time(self) -> datetime:
-        return awareutcnow()
-
-    def _get_time_window(self, reference: datetime) -> tuple[datetime, datetime]:
-        start = reference - self._config.streaming.window
-        end = reference + self._config.streaming.window
-
-        return start, end
-
-    async def _get_instances(
-        self, event_id: UUID, start: datetime, end: datetime
-    ) -> Sequence[bm.Instance]:
-        instances_list_request = bm.InstancesListRequest(
-            start=start,
-            end=end,
-            where={"event": {"is": {"id": event_id}}},
+    async def _get_instance(self, instance: m.Instance) -> bm.InstanceWithEventWithShow:
+        instances_get_request = bm.InstancesGetRequest(
+            event_id=instance.event,
+            start=instance.start,
             include={"event": {"include": {"show": True}}},
         )
 
         try:
-            instances_list_response = await self._beaver.instances.list(
-                instances_list_request
+            instances_get_response = await self._beaver.instances.get(
+                instances_get_request
             )
+        except be.NotFoundError as ex:
+            raise e.InstanceNotFoundError(instance) from ex
         except be.ServiceError as ex:
             raise e.ServiceError from ex
 
-        return instances_list_response.results.instances
+        if not isinstance(
+            instances_get_response.instance, bm.InstanceWithEventWithShow
+        ):
+            raise e.ServiceError
 
-    def _find_nearest_instance(
-        self, event_id: UUID, reference: datetime, instances: Sequence[bm.Instance]
-    ) -> bm.Instance:
-        def _compare(instance: bm.Instance) -> timedelta:
-            if instance.event is None:
-                raise e.ServiceError
-
-            start = instance.start.replace(tzinfo=instance.event.timezone)
-            start = start.astimezone(UTC)
-            return abs(start - reference)
-
-        instance = min(instances, key=_compare, default=None)
-
-        if instance is None:
-            raise e.InstanceNotFoundError(event_id)
-
-        return instance
-
-    def _generate_token(self) -> str:
-        return secrets.token_hex(16)
-
-    def _get_token_expiry(self) -> datetime:
-        return awareutcnow() + self._config.streaming.timeout
+        return instances_get_response.instance
 
     def _generate_credentials(self) -> m.Credentials:
         return m.Credentials(
-            token=self._generate_token(), expires_at=self._get_token_expiry()
+            token=secrets.token_hex(16),
+            expires_at=awareutcnow() + self._config.streaming.timeout,
         )
-
-    def _get_port(self) -> int:
-        return self._config.server.ports.srt
 
     def _emit_event(self, event: Event) -> None:
         data = event.model_dump_json(round_trip=True)
         self._channels.publish(data, "events")
 
-    async def _emit_availability_changed_event(self, event_id: UUID | None) -> None:
+    def _emit_availability_changed_event(self, instance: m.Instance | None) -> None:
         self._emit_event(
             ev.AvailabilityChangedEvent(
                 data=ev.AvailabilityChangedEventData(
                     availability=ev.Availability.map(
-                        self._create_availability(event_id)
+                        m.Availability(instance=instance, checked_at=awareutcnow())
                     )
                 )
             )
         )
 
-    async def _reserve_event(self, event: bm.Event) -> None:
+    async def _reserve(self, instance: bm.InstanceWithEventWithShow) -> None:
         async with self._lock:
             current = await self._store.get()
 
             if current is not None:
                 raise e.StreamBusyError(current)
 
-            await self._store.set(event.id)
-            await self._emit_availability_changed_event(event.id)
+            new = m.Instance(event=instance.event.id, start=instance.start)
+            await self._store.set(new)
+            self._emit_availability_changed_event(new)
 
     async def _free_event(self) -> None:
         async with self._lock:
             await self._store.set(None)
-            await self._emit_availability_changed_event(None)
+            self._emit_availability_changed_event(None)
 
     async def _watch_stream(self, stream: Stream) -> None:
         try:
@@ -138,11 +103,10 @@ class StreamingService:
         finally:
             await self._free_event()
 
-    async def _run(  # noqa: PLR0913
+    async def _run(
         self,
-        instance: bm.Instance,
+        instance: bm.InstanceWithEventWithShow,
         credentials: m.Credentials,
-        port: int,
         fmt: m.Format,
         metadata: Mapping[str, str] | None,
         *,
@@ -152,7 +116,7 @@ class StreamingService:
         stream = await runner.run(
             instance=instance,
             credentials=credentials,
-            port=port,
+            port=self._config.server.ports.srt,
             fmt=fmt,
             metadata=metadata,
             record=record,
@@ -165,34 +129,27 @@ class StreamingService:
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
         async with self._lock:
-            event = await self._store.get()
+            instance = await self._store.get()
 
-        return m.CheckResponse(availability=self._create_availability(event))
+        return m.CheckResponse(
+            availability=m.Availability(instance=instance, checked_at=awareutcnow())
+        )
 
     async def reserve(self, request: m.ReserveRequest) -> m.ReserveResponse:
         """Reserve a stream."""
-        reference = self._get_reference_time()
-        start, end = self._get_time_window(reference)
-
-        instances = await self._get_instances(request.event, start, end)
-        instance = self._find_nearest_instance(request.event, reference, instances)
-
-        if instance.event is None:
-            raise e.ServiceError
+        instance = await self._get_instance(request.instance)
 
         if request.record and instance.event.type != bm.EventType.live:
             raise e.UnrecordableEventError(instance.event.id)
 
         credentials = self._generate_credentials()
-        port = self._get_port()
 
-        await self._reserve_event(instance.event)
+        await self._reserve(instance)
 
         try:
             await self._run(
                 instance,
                 credentials,
-                port,
                 request.format,
                 request.metadata,
                 record=request.record,

@@ -7,7 +7,6 @@ from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetad
 
 from octopus.config.models import Config
 from octopus.services.apis.beaver import models as bm
-from octopus.services.streaming import errors as e
 from octopus.services.streaming import models as m
 from octopus.utils.time import awareutcnow, isostringify
 
@@ -44,16 +43,12 @@ class Runner:
 
     def _build_metadata(
         self,
-        instance: bm.Instance,
+        instance: bm.InstanceWithEventWithShow,
         metadata: Mapping[str, str] | None,
     ) -> Sequence[str]:
         metadata = dict(metadata or {})
 
-        if (
-            "title" not in metadata
-            and instance.event is not None
-            and instance.event.show is not None
-        ):
+        if "title" not in metadata and instance.event.show is not None:
             metadata["title"] = instance.event.show.title
 
         return self._build_ffmpeg_metadata_options(metadata)
@@ -85,14 +80,11 @@ class Runner:
 
     def _build_gecko_output(
         self,
-        instance: bm.Instance,
+        instance: bm.InstanceWithEventWithShow,
         fmt: m.Format,
         *,
         options: Mapping[str, str] | None = None,
     ) -> FFmpegNode:
-        if instance.event is None:
-            raise e.ServiceError
-
         target = f"{self._config.gecko.http.url}/recordings/{instance.event.id}/{isostringify(instance.start)}"
 
         return FFmpegNode(
@@ -107,7 +99,7 @@ class Runner:
 
     def _build_output(
         self,
-        instance: bm.Instance,
+        instance: bm.InstanceWithEventWithShow,
         fmt: m.Format,
         metadata: Mapping[str, str] | None,
         *,
@@ -145,7 +137,7 @@ class Runner:
 
     def _build_stream_metadata(  # noqa: PLR0913
         self,
-        instance: bm.Instance,
+        instance: bm.InstanceWithEventWithShow,
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
@@ -163,7 +155,7 @@ class Runner:
 
     async def run(  # noqa: PLR0913
         self,
-        instance: bm.Instance,
+        instance: bm.InstanceWithEventWithShow,
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,

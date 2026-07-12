@@ -1,10 +1,9 @@
-from collections.abc import Sequence
 from enum import StrEnum
 from typing import TypedDict
 from uuid import UUID
 
 from octopus.models.base import SerializableModel, datamodel
-from octopus.utils.time import NaiveDatetime, Timedelta, Timezone, UTCDatetime
+from octopus.utils.time import NaiveDatetime, Timedelta, Timezone
 
 
 class EventType(StrEnum):
@@ -34,11 +33,18 @@ class Event(SerializableModel):
     type: EventType
     """Type of the event."""
 
-    show: Show | None
-    """Show the event belongs to."""
+    show_id: UUID | None
+    """Identifier of the show the event belongs to."""
 
     timezone: Timezone
     """Timezone of the event."""
+
+
+class EventWithShow(Event):
+    """Event data with show relation included."""
+
+    show: Show | None
+    """Show the event belongs to."""
 
 
 class Instance(SerializableModel):
@@ -50,39 +56,22 @@ class Instance(SerializableModel):
     duration: Timedelta
     """Duration of the instance."""
 
-    event: Event | None
+    event_id: UUID
+    """Identifier of the event the instance belongs to."""
+
+
+class InstanceWithEvent(Instance):
+    """Instance data with event relation included."""
+
+    event: EventWithShow | Event
     """Event the instance belongs to."""
 
 
-class InstanceList(SerializableModel):
-    """List of instances."""
+class InstanceWithEventWithShow(Instance):
+    """Instance data with event and show relations included."""
 
-    instances: Sequence[Instance]
-    """Instances that matched the request."""
-
-
-class EventWhereInput(TypedDict, total=False):
-    """Event arguments for searching."""
-
-    id: UUID
-    """Identifier of the event."""
-
-
-EventRelationFilter = TypedDict(
-    "EventRelationFilter",
-    {
-        "is": EventWhereInput,
-        "is_not": EventWhereInput,
-    },
-    total=False,
-)
-
-
-class InstanceWhereInput(TypedDict, total=False):
-    """Instance arguments for searching."""
-
-    event: EventRelationFilter
-    """Event relation filter."""
+    event: EventWithShow
+    """Event the instance belongs to."""
 
 
 class EventInclude(TypedDict, total=False):
@@ -106,37 +95,34 @@ class InstanceInclude(TypedDict, total=False):
     """Event relation to include."""
 
 
-type InstancesListRequestStart = UTCDatetime
+type InstancesGetRequestEventId = UUID
 
-type InstancesListRequestEnd = UTCDatetime
+type InstancesGetRequestStart = NaiveDatetime
 
-type InstancesListRequestWhere = InstanceWhereInput | None
+type InstancesGetRequestInclude = InstanceInclude | None
 
-type InstancesListRequestInclude = InstanceInclude | None
-
-type InstancesListResponseResults = InstanceList
+type InstancesGetResponseInstance = (
+    InstanceWithEventWithShow | InstanceWithEvent | Instance
+)
 
 
 @datamodel
-class InstancesListRequest:
-    """Request to list instances."""
+class InstancesGetRequest:
+    """Request to get an instance."""
 
-    start: InstancesListRequestStart
-    """Start datetime in UTC to filter events instances."""
+    event_id: InstancesGetRequestEventId
+    """Identifier of the event the instance to get belongs to."""
 
-    end: InstancesListRequestEnd
-    """End datetime in UTC to filter events instances."""
+    start: InstancesGetRequestStart
+    """Start datetime of the instance to get in event timezone."""
 
-    where: InstancesListRequestWhere
-    """Filter to apply to find events."""
-
-    include: InstancesListRequestInclude
+    include: InstancesGetRequestInclude
     """Relations to include in the response."""
 
 
 @datamodel
-class InstancesListResponse:
-    """Response for listing instances."""
+class InstancesGetResponse:
+    """Response for getting an instance."""
 
-    results: InstancesListResponseResults
-    """List of instances."""
+    instance: InstancesGetResponseInstance
+    """Instance that matched the request."""

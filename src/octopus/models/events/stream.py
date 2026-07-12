@@ -7,14 +7,29 @@ from octopus.models.base import SerializableModel
 from octopus.models.events.enums import EventType
 from octopus.models.events.fields import CreatedAtField, DataField, TypeField
 from octopus.services.streaming import models as sm
-from octopus.utils.time import UTCDatetime, awareutcnow
+from octopus.utils.time import NaiveDatetime, UTCDatetime, awareutcnow
+
+
+class Instance(SerializableModel):
+    """Instance data."""
+
+    event: UUID
+    """Identifier of the event the instance belongs to."""
+
+    start: NaiveDatetime
+    """Start datetime of the instance in event timezone."""
+
+    @classmethod
+    def map(cls, instance: sm.Instance) -> Self:
+        """Map from internal representation."""
+        return cls(event=instance.event, start=instance.start)
 
 
 class Availability(SerializableModel):
     """Availability of a stream."""
 
-    event: UUID | None
-    """Identifier of the event that is currently being streamed."""
+    instance: Instance | None
+    """Instance that is currently being streamed."""
 
     checked_at: UTCDatetime
     """Datetime in UTC at which the availability was checked."""
@@ -22,7 +37,12 @@ class Availability(SerializableModel):
     @classmethod
     def map(cls, availability: sm.Availability) -> Self:
         """Map from internal representation."""
-        return cls(event=availability.event, checked_at=availability.checked_at)
+        return cls(
+            instance=Instance.map(availability.instance)
+            if availability.instance
+            else None,
+            checked_at=availability.checked_at,
+        )
 
 
 class AvailabilityChangedEventData(SerializableModel):

@@ -30,7 +30,7 @@ class Service:
     async def reserve(self, request: m.ReserveRequest) -> m.ReserveResponse:
         """Reserve a stream."""
         reserve_request = sm.ReserveRequest(
-            event=request.data.event,
+            instance=request.data.instance.map(),
             format=request.data.format,
             record=request.data.record,
             metadata=request.data.metadata,

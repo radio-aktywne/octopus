@@ -1,6 +1,5 @@
 from collections.abc import Callable, Sequence
 from contextlib import AbstractAsyncContextManager
-from uuid import UUID
 
 from litestar import Litestar
 from litestar.channels import ChannelsPlugin
@@ -16,6 +15,7 @@ from octopus.api.plugins.pydantic import PydanticPlugin
 from octopus.api.routes.router import router
 from octopus.config.models import Config
 from octopus.services.apis.beaver.service import BeaverService
+from octopus.services.streaming.models import Instance
 from octopus.state import State
 
 
@@ -53,7 +53,7 @@ class AppBuilder:
                 "config": self._config,
                 "beaver": BeaverService(config=self._config.beaver),
                 "lock": AsyncioLock(),
-                "store": MemoryStore[UUID | None](None),
+                "store": MemoryStore[Instance | None](None),
             }
         )
 

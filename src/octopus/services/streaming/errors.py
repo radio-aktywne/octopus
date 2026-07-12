@@ -1,15 +1,20 @@
 from uuid import UUID
 
+from octopus.services.streaming import models as m
+from octopus.utils.time import isostringify
+
 
 class ServiceError(Exception):
     """Base class for service errors."""
 
 
 class InstanceNotFoundError(ServiceError):
-    """Raised when no near instances of an event are found."""
+    """Raised when instance of an event is not found."""
 
-    def __init__(self, event_id: UUID) -> None:
-        super().__init__(f"No near instances of event {event_id} found.")
+    def __init__(self, instance: m.Instance) -> None:
+        super().__init__(
+            f"Instance of event {instance.event} starting at {isostringify(instance.start)} not found."
+        )
 
 
 class UnrecordableEventError(ServiceError):
@@ -22,7 +27,7 @@ class UnrecordableEventError(ServiceError):
 class StreamBusyError(ServiceError):
     """Raised when another stream is already being handled at the moment."""
 
-    def __init__(self, event_id: UUID) -> None:
+    def __init__(self, instance: m.Instance) -> None:
         super().__init__(
-            f"Another stream is already being handled for event {event_id}."
+            f"Stream is reserved for instance of event {instance.event} starting at {isostringify(instance.start)}."
         )
