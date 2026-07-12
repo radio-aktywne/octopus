@@ -7,8 +7,8 @@ title: Usage
 
 You can check if something is currently being streamed
 by sending a `GET` request to the `/check` endpoint.
-The response will contain the information about the event
-associated with the stream, if any.
+The response will contain the information about
+the instance of an event associated with the stream, if any.
 
 For example, you can use `curl` to do that:
 
@@ -20,7 +20,7 @@ curl --request GET http://localhost:10300/check
 
 You can request a reservation by sending a `POST` request to the `/reserve` endpoint.
 The request body should contain the information
-about the event associated with the stream
+about the instance of an event associated with the stream
 and if it should be recorded.
 See the API documentation for more details.
 
@@ -31,7 +31,10 @@ curl \
     --request POST \
     --header "Content-Type: application/json" \
     --data '{
-      "event": "747c31a8-74d2-497f-ba89-cdd85b243e5d",
+      "instance": {
+        "event": "747c31a8-74d2-497f-ba89-cdd85b243e5d",
+        "start": "2000-01-01T00:00:00"
+      },
       "record": true
     }' \
     http://localhost:10300/reserve

@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from http import HTTPMethod
+from http import HTTPMethod, HTTPStatus
 from typing import Any
 
 from httpx import AsyncClient, HTTPError, HTTPStatusError, Response
@@ -51,35 +51,34 @@ class BeaverInstancesService:
     def _dump_json(self, value: Jsonable) -> str:
         return value.model_dump_json(round_trip=True)
 
-    async def list(self, request: m.InstancesListRequest) -> m.InstancesListResponse:
-        """List instances."""
-        start = self._dump_json(Jsonable[m.InstancesListRequestStart](request.start))
-        end = self._dump_json(Jsonable[m.InstancesListRequestEnd](request.end))
-        params = {"start": start, "end": end}
-
-        if request.where is not None:
-            where = self._dump_json(
-                Jsonable[m.InstancesListRequestWhere](request.where)
-            )
-            params["where"] = where
-
-        if request.include is not None:
-            include = self._dump_json(
-                Jsonable[m.InstancesListRequestInclude](request.include)
-            )
-            params["include"] = include
+    async def get(self, request: m.InstancesGetRequest) -> m.InstancesGetResponse:
+        """Get instance."""
+        event_id = self._dump(
+            Serializable[m.InstancesGetRequestEventId](request.event_id)
+        )
+        start = self._dump(Serializable[m.InstancesGetRequestStart](request.start))
+        include = self._dump_json(
+            Jsonable[m.InstancesGetRequestInclude](request.include)
+        )
 
         response = await self.client.request(
-            HTTPMethod.GET, "/instances", params=params
+            HTTPMethod.GET,
+            f"/instances/{event_id}/{start}",
+            params={"include": include},
         )
 
         try:
             response.raise_for_status()
         except HTTPStatusError as ex:
+            if ex.response.status_code == HTTPStatus.NOT_FOUND:
+                raise e.NotFoundError from ex
             raise e.ServiceError from ex
 
-        results = m.InstanceList.model_validate_json(response.content)
-        return m.InstancesListResponse(results=results)
+        return m.InstancesGetResponse(
+            instance=Serializable[m.InstancesGetResponseInstance]
+            .model_validate_json(response.content)
+            .root
+        )
 
 
 class BeaverService:

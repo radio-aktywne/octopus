@@ -14,11 +14,11 @@ async def test_get(client: AsyncTestClient) -> None:
     assert status == HTTP_200_OK
 
     data = response.json()
-    assert "event" in data
+    assert "instance" in data
     assert "checkedAt" in data
 
-    event = data["event"]
-    assert event is None
+    instance = data["instance"]
+    assert instance is None
 
     checked_at = data["checkedAt"]
     assert datetime.fromisoformat(checked_at)

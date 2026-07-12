@@ -139,9 +139,6 @@ class StreamingConfig(BaseModel):
     timeout: Timedelta = Field(default=timedelta(minutes=1), ge=timedelta())
     """Time after which a stream will be stopped if no connections are made."""
 
-    window: Timedelta = Field(default=timedelta(hours=1), ge=timedelta())
-    """Time window to search for event instances around the current time."""
-
 
 class Config(BaseConfig):
     """Configuration for the service."""

@@ -13,11 +13,22 @@ class Format(StrEnum):
 
 
 @datamodel
+class Instance:
+    """Instance data."""
+
+    event: UUID
+    """Identifier of the event the instance belongs to."""
+
+    start: datetime
+    """Start datetime of the instance in event timezone."""
+
+
+@datamodel
 class Availability:
     """Availability of a stream."""
 
-    event: UUID | None
-    """Identifier of the event that is currently being streamed."""
+    instance: Instance | None
+    """Instance that is currently being streamed."""
 
     checked_at: datetime
     """Datetime in UTC at which the availability was checked."""
@@ -51,8 +62,8 @@ class CheckResponse:
 class ReserveRequest:
     """Request to reserve a stream."""
 
-    event: UUID
-    """Identifier of the event to reserve the stream for."""
+    instance: Instance
+    """Instance to reserve the stream for."""
 
     format: Format
     """Format of the audio in the stream."""
