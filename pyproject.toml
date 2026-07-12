@@ -1,6 +1,6 @@
 [project]
 name = "octopus"
-version = "0.27.0"
+version = "0.28.0"
 classifiers = ["Private :: Do Not Upload"]
 requires-python = "~= 3.13.0"
 dependencies = [
