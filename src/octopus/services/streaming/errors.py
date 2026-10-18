@@ -13,7 +13,8 @@ class InstanceNotFoundError(ServiceError):
 
     def __init__(self, instance: m.Instance) -> None:
         super().__init__(
-            f"Instance of event {instance.event} starting at {isostringify(instance.start)} not found."
+            f"Instance of event {instance.event} "
+            f"starting at {isostringify(instance.start)} not found."
         )
 
 
@@ -29,5 +30,6 @@ class StreamBusyError(ServiceError):
 
     def __init__(self, instance: m.Instance) -> None:
         super().__init__(
-            f"Stream is reserved for instance of event {instance.event} starting at {isostringify(instance.start)}."
+            f"Stream is reserved for instance of event {instance.event} "
+            f"starting at {isostringify(instance.start)}."
         )

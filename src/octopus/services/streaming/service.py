@@ -10,11 +10,9 @@ from pystreams.base import Stream
 from octopus.config.models import Config
 from octopus.models.events import stream as ev
 from octopus.models.events.types import Event
-from octopus.services.apis.beaver import errors as be
-from octopus.services.apis.beaver import models as bm
+from octopus.services.apis.beaver import errors as be, models as bm
 from octopus.services.apis.beaver.service import BeaverService
-from octopus.services.streaming import errors as e
-from octopus.services.streaming import models as m
+from octopus.services.streaming import errors as e, models as m
 from octopus.services.streaming.runner import Runner
 from octopus.utils.time import awareutcnow
 

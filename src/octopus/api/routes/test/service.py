@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from octopus.api.routes.test import errors as e
-from octopus.api.routes.test import models as m
-from octopus.services.test import errors as te
-from octopus.services.test import models as tm
+from octopus.api.routes.test import errors as e, models as m
+from octopus.services.test import errors as te, models as tm
 from octopus.services.test.service import TestService
 
 

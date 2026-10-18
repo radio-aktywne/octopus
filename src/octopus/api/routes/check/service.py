@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from octopus.api.routes.check import errors as e
-from octopus.api.routes.check import models as m
-from octopus.services.streaming import errors as se
-from octopus.services.streaming import models as sm
+from octopus.api.routes.check import errors as e, models as m
+from octopus.services.streaming import errors as se, models as sm
 from octopus.services.streaming.service import StreamingService
 
 

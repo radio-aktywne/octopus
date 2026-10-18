@@ -1,10 +1,8 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from octopus.api.routes.ping import errors as e
-from octopus.api.routes.ping import models as m
-from octopus.services.ping import errors as pe
-from octopus.services.ping import models as pm
+from octopus.api.routes.ping import errors as e, models as m
+from octopus.services.ping import errors as pe, models as pm
 from octopus.services.ping.service import PingService
 
 

@@ -5,6 +5,7 @@ from pydantic import Field
 from octopus.models.base import SerializableModel
 from octopus.utils.time import UTCDatetime
 
+
 type TypeField[T] = Annotated[
     T,
     Field(description="Type of the event."),

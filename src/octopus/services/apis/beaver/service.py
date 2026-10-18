@@ -2,12 +2,11 @@ from collections.abc import Mapping
 from http import HTTPMethod, HTTPStatus
 from typing import Any
 
-from httpx import AsyncClient, HTTPError, HTTPStatusError, Response
+from httpx2 import AsyncClient, HTTPError, HTTPStatusError, Response
 
 from octopus.config.models import BeaverConfig, BeaverHTTPConfig
 from octopus.models.base import Jsonable, Serializable
-from octopus.services.apis.beaver import errors as e
-from octopus.services.apis.beaver import models as m
+from octopus.services.apis.beaver import errors as e, models as m
 
 
 class BeaverClient:

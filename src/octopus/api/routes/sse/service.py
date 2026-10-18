@@ -1,10 +1,8 @@
 from collections.abc import AsyncGenerator, Generator
 from contextlib import contextmanager
 
-from octopus.api.routes.sse import errors as e
-from octopus.api.routes.sse import models as m
-from octopus.services.events import errors as ee
-from octopus.services.events import models as em
+from octopus.api.routes.sse import errors as e, models as m
+from octopus.services.events import errors as ee, models as em
 from octopus.services.events.service import EventsService
 
 

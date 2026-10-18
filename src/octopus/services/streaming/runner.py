@@ -85,7 +85,8 @@ class Runner:
         *,
         options: Mapping[str, str] | None = None,
     ) -> FFmpegNode:
-        target = f"{self._config.gecko.http.url}/recordings/{instance.event.id}/{isostringify(instance.start)}"
+        url = self._config.gecko.http.url
+        target = f"{url}/recordings/{instance.event.id}/{isostringify(instance.start)}"
 
         return FFmpegNode(
             target=target,
@@ -135,7 +136,7 @@ class Runner:
             options=options,
         )
 
-    def _build_stream_metadata(  # noqa: PLR0913
+    def _build_stream_metadata(
         self,
         instance: bm.InstanceWithEventWithShow,
         credentials: m.Credentials,
@@ -153,7 +154,7 @@ class Runner:
     async def _run_stream(self, metadata: ProcessBasedStreamMetadata) -> Stream:
         return await ProcessBasedStreamFactory().create(metadata)
 
-    async def run(  # noqa: PLR0913
+    async def run(
         self,
         instance: bm.InstanceWithEventWithShow,
         credentials: m.Credentials,
