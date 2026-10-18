@@ -7,6 +7,7 @@ from octopus.config.errors import ConfigError
 from octopus.console import FallbackConsoleBuilder
 from octopus.server import Server
 
+
 cli = CliBuilder().build()
 
 

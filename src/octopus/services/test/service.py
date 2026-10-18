@@ -2,8 +2,7 @@ from litestar.channels import ChannelsPlugin
 
 from octopus.models.events import test as ev
 from octopus.models.events.types import Event
-from octopus.services.test import errors as e
-from octopus.services.test import models as m
+from octopus.services.test import errors as e, models as m
 
 
 class TestService:

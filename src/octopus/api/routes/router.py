@@ -6,6 +6,7 @@ from octopus.api.routes.reserve.router import router as reserve
 from octopus.api.routes.sse.router import router as sse
 from octopus.api.routes.test.router import router as test
 
+
 router = Router(
     path="/",
     route_handlers=[

@@ -9,7 +9,11 @@ from litestar.plugins import PluginProtocol
 from pylocks.asyncio import AsyncioLock
 from pystores.memory import MemoryStore
 
-from octopus.api.lifespans import SuppressHTTPXLoggingLifespan, TestLifespan
+from octopus.api.lifespans import (
+    SuppressHTTPX2LoggingLifespan,
+    SuppressHTTPXLoggingLifespan,
+    TestLifespan,
+)
 from octopus.api.openapi import OpenAPIConfigBuilder
 from octopus.api.plugins.pydantic import PydanticPlugin
 from octopus.api.routes.router import router
@@ -36,6 +40,7 @@ class AppBuilder:
         return [
             TestLifespan,
             SuppressHTTPXLoggingLifespan,
+            SuppressHTTPX2LoggingLifespan,
         ]
 
     def _build_openapi_config(self) -> OpenAPIConfig:

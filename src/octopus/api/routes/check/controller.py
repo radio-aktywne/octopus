@@ -1,9 +1,8 @@
 from collections.abc import Mapping
 
-from litestar import Controller as BaseController
-from litestar import handlers
+from litestar import Controller as BaseController, handlers
 from litestar.channels import ChannelsPlugin
-from litestar.di import Provide
+from litestar.di import NamedDependency, Provide
 from litestar.response import Response
 
 from octopus.api.routes.check import models as m
@@ -16,7 +15,9 @@ from octopus.state import State
 class DependenciesBuilder:
     """Builder for the dependencies of the controller."""
 
-    async def _build_service(self, channels: ChannelsPlugin, state: State) -> Service:
+    async def _build_service(
+        self, channels: NamedDependency[ChannelsPlugin], state: State
+    ) -> Service:
         return Service(
             streaming=StreamingService(
                 config=state.config,
@@ -43,7 +44,7 @@ class Controller(BaseController):
         summary="Check availability",
     )
     async def check(
-        self, service: Service
+        self, service: NamedDependency[Service]
     ) -> Response[Serializable[m.CheckResponseAvailability]]:
         """Check the availability of the stream."""
         request = m.CheckRequest()
