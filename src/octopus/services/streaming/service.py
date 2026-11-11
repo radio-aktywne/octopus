@@ -1,6 +1,7 @@
 import asyncio
 import secrets
 from collections.abc import Mapping
+from contextlib import suppress
 
 from litestar.channels import ChannelsPlugin
 from pylocks.base import Lock
@@ -33,7 +34,7 @@ class StreamingService:
         self._lock = lock
         self._beaver = beaver
         self._channels = channels
-        self._tasks = set[asyncio.Task]()
+        self._task: asyncio.Task | None = None
 
     async def _get_instance(self, instance: m.Instance) -> bm.InstanceWithEventWithShow:
         instances_get_request = bm.InstancesGetRequest(
@@ -95,9 +96,21 @@ class StreamingService:
             await self._store.set(None)
             self._emit_availability_changed_event(None)
 
+    async def _stop_stream(self, stream: Stream) -> None:
+        for action in (stream.terminate, stream.kill):
+            with suppress(Exception):
+                await asyncio.wait_for(action(), timeout=5)
+
+            with suppress(Exception):
+                await asyncio.wait_for(stream.wait(), timeout=5)
+                return
+
     async def _watch_stream(self, stream: Stream) -> None:
         try:
             await stream.wait()
+        except asyncio.CancelledError:
+            await self._stop_stream(stream)
+            raise
         finally:
             await self._free_event()
 
@@ -120,9 +133,12 @@ class StreamingService:
             record=record,
         )
 
-        task = asyncio.create_task(self._watch_stream(stream))
-        self._tasks.add(task)
-        task.add_done_callback(self._tasks.discard)
+        def on_done(task: asyncio.Task) -> None:
+            if self._task is task:
+                self._task = None
+
+        self._task = asyncio.create_task(self._watch_stream(stream), eager_start=True)
+        self._task.add_done_callback(on_done)
 
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
@@ -152,8 +168,17 @@ class StreamingService:
                 request.metadata,
                 record=request.record,
             )
-        except:
+        except BaseException:
             await self._free_event()
             raise
 
         return m.ReserveResponse(credentials=credentials)
+
+    async def close(self) -> None:
+        """Close gracefully."""
+        if self._task is None:
+            return
+
+        self._task.cancel()
+        with suppress(asyncio.CancelledError, RuntimeError):
+            await self._task
