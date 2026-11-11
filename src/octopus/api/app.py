@@ -10,6 +10,7 @@ from pylocks.asyncio import AsyncioLock
 from pystores.memory import MemoryStore
 
 from octopus.api.lifespans import (
+    StreamingLifespan,
     SuppressHTTPX2LoggingLifespan,
     SuppressHTTPXLoggingLifespan,
     TestLifespan,
@@ -20,6 +21,7 @@ from octopus.api.routes.router import router
 from octopus.config.models import Config
 from octopus.services.apis.beaver.service import BeaverService
 from octopus.services.streaming.models import Instance
+from octopus.services.streaming.service import StreamingService
 from octopus.state import State
 
 
@@ -41,34 +43,52 @@ class AppBuilder:
             TestLifespan,
             SuppressHTTPXLoggingLifespan,
             SuppressHTTPX2LoggingLifespan,
+            StreamingLifespan,
         ]
 
     def _build_openapi_config(self) -> OpenAPIConfig:
         return OpenAPIConfigBuilder().build()
 
-    def _build_plugins(self) -> Sequence[PluginProtocol]:
+    def _build_channels_plugin(self) -> ChannelsPlugin:
+        return ChannelsPlugin(backend=MemoryChannelsBackend(), channels=["events"])
+
+    def _build_plugins(self, channels: ChannelsPlugin) -> Sequence[PluginProtocol]:
         return [
-            ChannelsPlugin(backend=MemoryChannelsBackend(), channels=["events"]),
+            channels,
             PydanticPlugin(),
         ]
 
-    def _build_initial_state(self) -> State:
+    def _build_initial_state(self, channels: ChannelsPlugin) -> State:
+        beaver = BeaverService(config=self._config.beaver)
+        lock = AsyncioLock()
+        store = MemoryStore[Instance | None](None)
+        streaming = StreamingService(
+            config=self._config,
+            store=store,
+            lock=lock,
+            beaver=beaver,
+            channels=channels,
+        )
+
         return State(
             {
                 "config": self._config,
-                "beaver": BeaverService(config=self._config.beaver),
-                "lock": AsyncioLock(),
-                "store": MemoryStore[Instance | None](None),
+                "beaver": beaver,
+                "lock": lock,
+                "store": store,
+                "streaming": streaming,
             }
         )
 
     def build(self) -> Litestar:
         """Build the app."""
+        channels = self._build_channels_plugin()
+
         return Litestar(
             route_handlers=[router],
             debug=self._config.debug,
             lifespan=self._build_lifespan(),
             openapi_config=self._build_openapi_config(),
-            plugins=self._build_plugins(),
-            state=self._build_initial_state(),
+            plugins=self._build_plugins(channels),
+            state=self._build_initial_state(channels),
         )

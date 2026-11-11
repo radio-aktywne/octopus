@@ -3,11 +3,12 @@ from math import ceil
 
 from pystreams.base import Stream
 from pystreams.ffmpeg import FFmpegNode, FFmpegStreamMetadata, FFmpegTeeNode
-from pystreams.process import ProcessBasedStreamFactory, ProcessBasedStreamMetadata
+from pystreams.process import ProcessBasedStreamMetadata
 
 from octopus.config.models import Config
 from octopus.services.apis.beaver import models as bm
 from octopus.services.streaming import models as m
+from octopus.services.streaming.stream import LoggedStreamFactory
 from octopus.utils.time import awareutcnow, isostringify
 
 
@@ -149,10 +150,14 @@ class Runner:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
             output=self._build_output(instance, fmt, metadata, record=record),
+            options={
+                "hide_banner": True,
+                "nostats": True,
+            },
         )
 
     async def _run_stream(self, metadata: ProcessBasedStreamMetadata) -> Stream:
-        return await ProcessBasedStreamFactory().create(metadata)
+        return await LoggedStreamFactory().create(metadata)
 
     async def run(
         self,

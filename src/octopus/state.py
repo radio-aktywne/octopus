@@ -5,6 +5,7 @@ from pystores.base import Store
 from octopus.config.models import Config
 from octopus.services.apis.beaver.service import BeaverService
 from octopus.services.streaming.models import Instance
+from octopus.services.streaming.service import StreamingService
 
 
 class State(LitestarState):
@@ -21,3 +22,6 @@ class State(LitestarState):
 
     store: Store[Instance | None]
     """Store for the state of currently streamed instance."""
+
+    streaming: StreamingService
+    """Service for streaming."""
