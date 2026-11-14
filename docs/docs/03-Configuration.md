@@ -55,6 +55,12 @@ You can configure the service at runtime using various environment variables:
 - `OCTOPUS__STREAMING__LATENCY` -
   target latency for buffering outgoing stream
   (default: `PT0.2S`)
+- `OCTOPUS__STREAMING__LINGER` -
+  time allowed for outgoing stream to linger when closing
+  (default: `PT1S`)
+- `OCTOPUS__STREAMING__OGG__PAGE` -
+  preferred duration of outgoing Ogg pages
+  (default: `PT0.000001S`)
 - `OCTOPUS__STREAMING__TIMEOUT` -
   time after which a stream will be stopped if no connections are made
   (default: `PT1M`)

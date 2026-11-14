@@ -30,6 +30,12 @@ class ReservationInput(SerializableModel):
     format: sm.Format = sm.Format.OGG
     """Format of the audio in the stream."""
 
+    force: bool = False
+    """Whether to replace an existing stream reservation."""
+
+    start: sm.Start = sm.Start.HARD
+    """How playback should start relative to existing audio."""
+
     record: bool = False
     """Whether to record the stream."""
 

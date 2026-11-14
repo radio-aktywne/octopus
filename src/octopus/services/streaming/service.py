@@ -1,7 +1,7 @@
 import asyncio
 import secrets
-from collections.abc import Mapping
 from contextlib import suppress
+from math import ceil
 
 from litestar.channels import ChannelsPlugin
 from pylocks.base import Lock
@@ -35,6 +35,7 @@ class StreamingService:
         self._beaver = beaver
         self._channels = channels
         self._task: asyncio.Task | None = None
+        self._transition = asyncio.Lock()
 
     async def _get_instance(self, instance: m.Instance) -> bm.InstanceWithEventWithShow:
         instances_get_request = bm.InstancesGetRequest(
@@ -91,54 +92,64 @@ class StreamingService:
             await self._store.set(new)
             self._emit_availability_changed_event(new)
 
-    async def _free_event(self) -> None:
+    async def _release(self) -> None:
         async with self._lock:
             await self._store.set(None)
             self._emit_availability_changed_event(None)
 
     async def _stop_stream(self, stream: Stream) -> None:
-        for action in (stream.terminate, stream.kill):
+        linger = ceil(self._config.streaming.linger.total_seconds())
+
+        for action, timeout in ((stream.terminate, linger + 5), (stream.kill, 5)):
             with suppress(Exception):
                 await asyncio.wait_for(action(), timeout=5)
 
             with suppress(Exception):
-                await asyncio.wait_for(stream.wait(), timeout=5)
+                await asyncio.wait_for(stream.wait(), timeout=timeout)
                 return
+
+        raise e.StreamStopError
 
     async def _watch_stream(self, stream: Stream) -> None:
         try:
             await stream.wait()
+            await self._release()
         except asyncio.CancelledError:
             await self._stop_stream(stream)
+            await self._release()
+
+    async def _stop(self) -> None:
+        if self._task is None:
+            return
+
+        self._task.cancel()
+
+        try:
+            await asyncio.shield(self._task)
+        except asyncio.CancelledError:
+            await self._task
             raise
-        finally:
-            await self._free_event()
+
+        self._task = None
 
     async def _run(
         self,
         instance: bm.InstanceWithEventWithShow,
         credentials: m.Credentials,
-        fmt: m.Format,
-        metadata: Mapping[str, str] | None,
-        *,
-        record: bool,
+        request: m.ReserveRequest,
     ) -> None:
         runner = Runner(self._config)
         stream = await runner.run(
             instance=instance,
             credentials=credentials,
             port=self._config.server.ports.srt,
-            fmt=fmt,
-            metadata=metadata,
-            record=record,
+            fmt=request.format,
+            start=request.start,
+            metadata=request.metadata,
+            record=request.record,
         )
 
-        def on_done(task: asyncio.Task) -> None:
-            if self._task is task:
-                self._task = None
-
         self._task = asyncio.create_task(self._watch_stream(stream), eager_start=True)
-        self._task.add_done_callback(on_done)
 
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
@@ -156,29 +167,26 @@ class StreamingService:
         if request.record and instance.event.type != bm.EventType.live:
             raise e.UnrecordableEventError(instance.event.id)
 
-        credentials = self._generate_credentials()
+        async with self._transition:
+            if request.force:
+                await self._stop()
 
-        await self._reserve(instance)
+            credentials = self._generate_credentials()
 
-        try:
-            await self._run(
-                instance,
-                credentials,
-                request.format,
-                request.metadata,
-                record=request.record,
-            )
-        except BaseException:
-            await self._free_event()
-            raise
+            await self._reserve(instance)
+
+            try:
+                await self._run(instance, credentials, request)
+            except BaseException:
+                await self._release()
+                raise
 
         return m.ReserveResponse(credentials=credentials)
 
     async def close(self) -> None:
         """Close gracefully."""
-        if self._task is None:
-            return
+        async with self._transition:
+            with suppress(asyncio.CancelledError, RuntimeError):
+                await self._stop()
 
-        self._task.cancel()
-        with suppress(asyncio.CancelledError, RuntimeError):
-            await self._task
+            self._task = None
