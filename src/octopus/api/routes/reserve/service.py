@@ -30,6 +30,8 @@ class Service:
         reserve_request = sm.ReserveRequest(
             instance=request.data.instance.map(),
             format=request.data.format,
+            force=request.data.force,
+            start=request.data.start,
             record=request.data.record,
             metadata=request.data.metadata,
         )
