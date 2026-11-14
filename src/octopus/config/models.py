@@ -126,6 +126,13 @@ class ServerConfig(BaseModel):
     """Trusted IP addresses."""
 
 
+class StreamingOGGConfig(BaseModel):
+    """Configuration for outgoing Ogg streams."""
+
+    page: Timedelta = Field(default=timedelta(microseconds=1), gt=timedelta())
+    """Preferred duration of outgoing Ogg pages."""
+
+
 class StreamingConfig(BaseModel):
     """Configuration for the streaming service."""
 
@@ -135,6 +142,12 @@ class StreamingConfig(BaseModel):
         le=timedelta(milliseconds=8000),
     )
     """Target latency for buffering outgoing stream."""
+
+    linger: Timedelta = Field(default=timedelta(seconds=1), ge=timedelta())
+    """Time allowed for outgoing stream to linger when closing."""
+
+    ogg: StreamingOGGConfig = StreamingOGGConfig()
+    """Configuration for outgoing Ogg streams."""
 
     timeout: Timedelta = Field(default=timedelta(minutes=1), ge=timedelta())
     """Time after which a stream will be stopped if no connections are made."""

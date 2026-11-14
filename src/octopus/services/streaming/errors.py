@@ -25,6 +25,13 @@ class UnrecordableEventError(ServiceError):
         super().__init__(f"Event {event_id} is not recordable.")
 
 
+class StreamStopError(ServiceError):
+    """Raised when the stream cannot be stopped."""
+
+    def __init__(self) -> None:
+        super().__init__("Failed to stop the stream.")
+
+
 class StreamBusyError(ServiceError):
     """Raised when another stream is already being handled at the moment."""
 

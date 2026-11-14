@@ -12,6 +12,13 @@ class Format(StrEnum):
     OGG = "ogg"
 
 
+class Start(StrEnum):
+    """Playback start behavior."""
+
+    HARD = "hard"
+    SOFT = "soft"
+
+
 @datamodel
 class Instance:
     """Instance data."""
@@ -67,6 +74,12 @@ class ReserveRequest:
 
     format: Format
     """Format of the audio in the stream."""
+
+    force: bool
+    """Whether to replace an existing stream reservation."""
+
+    start: Start
+    """How playback should start relative to existing audio."""
 
     record: bool
     """Whether to record the stream."""

@@ -35,7 +35,7 @@ class Runner:
         )
 
     def _build_ffmpeg_fifo_options(self, options: Mapping[str, str]) -> str:
-        return "\\:".join(f"{key}={value}" for key, value in options.items())
+        return ":".join(f"{key}={value}" for key, value in options.items())
 
     def _build_ffmpeg_metadata_options(
         self, metadata: Mapping[str, str]
@@ -67,17 +67,24 @@ class Runner:
     def _build_dingo_output(
         self, fmt: m.Format, *, options: Mapping[str, str] | None = None
     ) -> FFmpegNode:
-        latency = ceil(self._config.streaming.latency.total_seconds() * 1000000)
+        values = {
+            **(options or {}),
+            "f": self._map_format(fmt),
+            "latency": ceil(self._config.streaming.latency.total_seconds() * 1000000),
+            "linger": ceil(self._config.streaming.linger.total_seconds()),
+            "mode": "caller",
+        }
 
-        return FFmpegNode(
-            target=self._config.dingo.srt.url,
-            options={
-                **(options or {}),
-                "f": self._map_format(fmt),
-                "latency": latency,
-                "mode": "caller",
-            },
-        )
+        match fmt:
+            case m.Format.OGG:
+                values = {
+                    **values,
+                    "page_duration": ceil(
+                        self._config.streaming.ogg.page.total_seconds() * 1000000
+                    ),
+                }
+
+        return FFmpegNode(target=self._config.dingo.srt.url, options=values)
 
     def _build_gecko_output(
         self,
@@ -103,6 +110,7 @@ class Runner:
         self,
         instance: bm.InstanceWithEventWithShow,
         fmt: m.Format,
+        start: m.Start,
         metadata: Mapping[str, str] | None,
         *,
         record: bool,
@@ -114,11 +122,22 @@ class Runner:
         }
 
         if not record:
-            return self._build_dingo_output(fmt, options=options)
+            return self._build_dingo_output(
+                fmt,
+                options=options
+                | {
+                    "srt_streamid": f"#!::dingo_start={start}",
+                },
+            )
 
         return FFmpegTeeNode(
             nodes=[
-                self._build_dingo_output(fmt),
+                self._build_dingo_output(
+                    fmt,
+                    options={
+                        "srt_streamid": f"#!::dingo_start={start}",
+                    },
+                ),
                 self._build_gecko_output(
                     instance,
                     fmt,
@@ -143,13 +162,14 @@ class Runner:
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
+        start: m.Start,
         metadata: Mapping[str, str] | None,
         *,
         record: bool,
     ) -> ProcessBasedStreamMetadata:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
-            output=self._build_output(instance, fmt, metadata, record=record),
+            output=self._build_output(instance, fmt, start, metadata, record=record),
             options={
                 "hide_banner": True,
                 "nostats": True,
@@ -165,12 +185,13 @@ class Runner:
         credentials: m.Credentials,
         port: int,
         fmt: m.Format,
+        start: m.Start,
         metadata: Mapping[str, str] | None,
         *,
         record: bool,
     ) -> Stream:
         """Run the stream."""
         meta = self._build_stream_metadata(
-            instance, credentials, port, fmt, metadata, record=record
+            instance, credentials, port, fmt, start, metadata, record=record
         )
         return await self._run_stream(meta)
