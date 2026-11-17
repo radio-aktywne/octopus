@@ -19,9 +19,11 @@ curl --request GET http://localhost:10300/check
 ## Reserving the stream
 
 You can request a reservation by sending a `POST` request to the `/reserve` endpoint.
-The request body should contain the information
-about the instance of an event associated with the stream
-and if it should be recorded.
+The request body should contain information
+about the instance of an event associated with the stream,
+whether to record it,
+whether to interrupt playback or wait for earlier audio to finish,
+and whether to replace an existing reservation.
 See the API documentation for more details.
 
 For example, you can use `curl` to do that:
@@ -34,8 +36,7 @@ curl \
       "instance": {
         "event": "747c31a8-74d2-497f-ba89-cdd85b243e5d",
         "start": "2000-01-01T00:00:00"
-      },
-      "record": true
+      }
     }' \
     http://localhost:10300/reserve
 ```
