@@ -1,6 +1,7 @@
 from collections.abc import Mapping, Sequence
 from math import ceil
 
+from anyio import Path
 from pystreams.base import Stream
 from pystreams.ffmpeg import FFmpegNode, FFmpegStreamMetadata, FFmpegTeeNode
 from pystreams.process import ProcessBasedStreamMetadata
@@ -9,7 +10,7 @@ from octopus.config.models import Config
 from octopus.services.apis.beaver import models as bm
 from octopus.services.streaming import models as m
 from octopus.services.streaming.stream import LoggedStreamFactory
-from octopus.utils.time import awareutcnow, isostringify
+from octopus.utils.time import awareutcnow
 
 
 class Runner:
@@ -59,11 +60,6 @@ class Runner:
             case m.Format.OGG:
                 return "ogg"
 
-    def _map_content_type(self, fmt: m.Format) -> str:
-        match fmt:
-            case m.Format.OGG:
-                return "audio/ogg"
-
     def _build_dingo_output(
         self, fmt: m.Format, *, options: Mapping[str, str] | None = None
     ) -> FFmpegNode:
@@ -86,23 +82,18 @@ class Runner:
 
         return FFmpegNode(target=self._config.dingo.srt.url, options=values)
 
-    def _build_gecko_output(
+    def _build_recording_output(
         self,
-        instance: bm.InstanceWithEventWithShow,
+        path: Path,
         fmt: m.Format,
         *,
         options: Mapping[str, str] | None = None,
     ) -> FFmpegNode:
-        url = self._config.gecko.http.url
-        target = f"{url}/recordings/{instance.event.id}/{isostringify(instance.start)}"
-
         return FFmpegNode(
-            target=target,
+            target=str(path),
             options={
                 **(options or {}),
-                "content_type": self._map_content_type(fmt),
                 "f": self._map_format(fmt),
-                "method": "PUT",
             },
         )
 
@@ -112,8 +103,7 @@ class Runner:
         fmt: m.Format,
         start: m.Start,
         metadata: Mapping[str, str] | None,
-        *,
-        record: bool,
+        recording: Path | None,
     ) -> FFmpegNode:
         options = {
             "acodec": "copy",
@@ -121,7 +111,7 @@ class Runner:
             "metadata": self._build_metadata(instance, metadata),
         }
 
-        if not record:
+        if recording is None:
             return self._build_dingo_output(
                 fmt,
                 options=options
@@ -138,8 +128,8 @@ class Runner:
                         "srt_streamid": f"#!::dingo_start={start}",
                     },
                 ),
-                self._build_gecko_output(
-                    instance,
+                self._build_recording_output(
+                    recording,
                     fmt,
                     options={
                         "fifo_options": self._build_ffmpeg_fifo_options(
@@ -164,12 +154,11 @@ class Runner:
         fmt: m.Format,
         start: m.Start,
         metadata: Mapping[str, str] | None,
-        *,
-        record: bool,
+        recording: Path | None,
     ) -> ProcessBasedStreamMetadata:
         return FFmpegStreamMetadata(
             input=self._build_input(credentials, port),
-            output=self._build_output(instance, fmt, start, metadata, record=record),
+            output=self._build_output(instance, fmt, start, metadata, recording),
             options={
                 "hide_banner": True,
                 "nostats": True,
@@ -187,11 +176,10 @@ class Runner:
         fmt: m.Format,
         start: m.Start,
         metadata: Mapping[str, str] | None,
-        *,
-        record: bool,
+        recording: Path | None,
     ) -> Stream:
         """Run the stream."""
         meta = self._build_stream_metadata(
-            instance, credentials, port, fmt, start, metadata, record=record
+            instance, credentials, port, fmt, start, metadata, recording
         )
         return await self._run_stream(meta)

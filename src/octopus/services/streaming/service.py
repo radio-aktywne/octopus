@@ -13,6 +13,9 @@ from octopus.models.events import stream as ev
 from octopus.models.events.types import Event
 from octopus.services.apis.beaver import errors as be, models as bm
 from octopus.services.apis.beaver.service import BeaverService
+from octopus.services.recording import models as rm
+from octopus.services.recording.service import RecordingService
+from octopus.services.recording.workspace import Workspace
 from octopus.services.streaming import errors as e, models as m
 from octopus.services.streaming.runner import Runner
 from octopus.utils.time import awareutcnow
@@ -27,14 +30,17 @@ class StreamingService:
         store: Store[m.Instance | None],
         lock: Lock,
         beaver: BeaverService,
+        recording: RecordingService,
         channels: ChannelsPlugin,
     ) -> None:
         self._config = config
         self._store = store
         self._lock = lock
         self._beaver = beaver
+        self._recording = recording
         self._channels = channels
         self._task: asyncio.Task | None = None
+        self._finishing = False
         self._transition = asyncio.Lock()
 
     async def _get_instance(self, instance: m.Instance) -> bm.InstanceWithEventWithShow:
@@ -59,6 +65,11 @@ class StreamingService:
             raise e.ServiceError
 
         return instances_get_response.instance
+
+    def _map_format(self, fmt: m.Format) -> rm.Format:
+        match fmt:
+            case m.Format.OGG:
+                return rm.Format.OGG
 
     def _generate_credentials(self) -> m.Credentials:
         return m.Credentials(
@@ -110,19 +121,26 @@ class StreamingService:
 
         raise e.StreamStopError
 
-    async def _watch_stream(self, stream: Stream) -> None:
+    async def _watch_stream(self, stream: Stream, workspace: Workspace | None) -> None:
         try:
             await stream.wait()
-            await self._release()
         except asyncio.CancelledError:
             await self._stop_stream(stream)
-            await self._release()
+
+        self._finishing = True
+
+        if workspace is not None:
+            with suppress(Exception):
+                await self._recording.submit(workspace)
+
+        await self._release()
 
     async def _stop(self) -> None:
         if self._task is None:
             return
 
-        self._task.cancel()
+        if not self._finishing:
+            self._task.cancel()
 
         try:
             await asyncio.shield(self._task)
@@ -143,17 +161,38 @@ class StreamingService:
         request: m.ReserveRequest,
     ) -> None:
         runner = Runner(self._config)
-        stream = await runner.run(
-            instance=instance,
-            credentials=credentials,
-            port=self._config.server.ports.srt,
-            fmt=request.format,
-            start=request.start,
-            metadata=request.metadata,
-            record=request.record,
-        )
+        workspace = None
 
-        self._task = asyncio.create_task(self._watch_stream(stream), eager_start=True)
+        if request.record:
+            workspace = await Workspace.create(
+                rm.Instance(event=instance.event.id, start=instance.start),
+                self._map_format(request.format),
+            )
+
+        try:
+            stream = await runner.run(
+                instance=instance,
+                credentials=credentials,
+                port=self._config.server.ports.srt,
+                fmt=request.format,
+                start=request.start,
+                metadata=request.metadata,
+                recording=(
+                    workspace.directory / workspace.current
+                    if workspace is not None
+                    else None
+                ),
+            )
+        except BaseException:
+            if workspace is not None:
+                await workspace.delete()
+
+            raise
+
+        self._finishing = False
+        self._task = asyncio.create_task(
+            self._watch_stream(stream, workspace), eager_start=True
+        )
 
     async def check(self, request: m.CheckRequest) -> m.CheckResponse:
         """Check the availability of the stream."""
@@ -194,3 +233,5 @@ class StreamingService:
                 await self._stop()
 
             self._task = None
+
+            await self._recording.close()
