@@ -20,6 +20,7 @@ from octopus.api.plugins.pydantic import PydanticPlugin
 from octopus.api.routes.router import router
 from octopus.config.models import Config
 from octopus.services.apis.beaver.service import BeaverService
+from octopus.services.recording.service import RecordingService
 from octopus.services.streaming.models import Instance
 from octopus.services.streaming.service import StreamingService
 from octopus.state import State
@@ -62,18 +63,20 @@ class AppBuilder:
         beaver = BeaverService(config=self._config.beaver)
         lock = AsyncioLock()
         store = MemoryStore[Instance | None](None)
+        recording = RecordingService(config=self._config, lock=AsyncioLock())
         streaming = StreamingService(
             config=self._config,
             store=store,
             lock=lock,
             beaver=beaver,
+            recording=recording,
             channels=channels,
         )
 
         return State(
             {
-                "config": self._config,
                 "beaver": beaver,
+                "config": self._config,
                 "lock": lock,
                 "store": store,
                 "streaming": streaming,

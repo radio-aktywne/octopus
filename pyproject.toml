@@ -5,6 +5,8 @@ classifiers = ["Private :: Do Not Upload"]
 
 requires-python = "~= 3.14.0"
 dependencies = [
+  # Async utilities
+  "anyio ~= 4.15.0",
   # Async HTTP requests
   "httpx2 ~= 2.13.0",
   # Main API framework
